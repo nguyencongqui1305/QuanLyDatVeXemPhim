@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<main layout:fragment="content">
+<div class="auth-container">
+    <div class="auth-card animate-fade-up" style="max-width:500px">
+        <div class="auth-logo"><i class="fas fa-user-plus me-2"></i>Đăng ký</div>
+        <div class="auth-subtitle">Tạo tài khoản để đặt vé dễ dàng hơn</div>
+
+        <div th:if="${errorMessage}" class="alert mb-3" style="background:rgba(229,9,20,0.1);border:1px solid rgba(229,9,20,0.3);color:#ff4d4d;border-radius:10px;padding:12px 16px;font-size:0.88rem">
+            <i class="fas fa-exclamation-circle me-2"></i><span th:text="${errorMessage}"></span>
+        </div>
+
+        <form th:action="@{/register}" method="post" th:object="${registerDTO}" novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="mb-3">
+                <label class="form-label-dark">Họ và tên *</label>
+                <input type="text" th:field="*{hoTen}" class="form-control-dark form-control" placeholder="Nguyễn Văn A"
+                       th:classappend="${#fields.hasErrors('hoTen')} ? ' border-danger' : ''"/>
+                <div th:if="${#fields.hasErrors('hoTen')}" class="text-danger" style="font-size:0.8rem;margin-top:4px">
+                    <span th:errors="*{hoTen}"></span>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label-dark">Số điện thoại *</label>
+                    <input type="tel" th:field="*{sdt}" class="form-control-dark form-control" placeholder="0901234567"
+                           th:classappend="${#fields.hasErrors('sdt')} ? ' border-danger' : ''"/>
+                    <div th:if="${#fields.hasErrors('sdt')}" class="text-danger" style="font-size:0.8rem;margin-top:4px">
+                        <span th:errors="*{sdt}"></span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label-dark">Email *</label>
+                    <input type="email" th:field="*{email}" class="form-control-dark form-control" placeholder="email@example.com"
+                           th:classappend="${#fields.hasErrors('email')} ? ' border-danger' : ''"/>
+                    <div th:if="${#fields.hasErrors('email')}" class="text-danger" style="font-size:0.8rem;margin-top:4px">
+                        <span th:errors="*{email}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-4">
+                <div class="col-6">
+                    <label class="form-label-dark">Mật khẩu *</label>
+                    <input type="password" th:field="*{matKhau}" class="form-control-dark form-control" placeholder="Tối thiểu 6 ký tự"
+                           th:classappend="${#fields.hasErrors('matKhau')} ? ' border-danger' : ''"/>
+                    <div th:if="${#fields.hasErrors('matKhau')}" class="text-danger" style="font-size:0.8rem;margin-top:4px">
+                        <span th:errors="*{matKhau}"></span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label-dark">Xác nhận MK *</label>
+                    <input type="password" th:field="*{xacNhanMatKhau}" class="form-control-dark form-control" placeholder="Nhập lại mật khẩu"
+                           th:classappend="${#fields.hasErrors('xacNhanMatKhau')} ? ' border-danger' : ''"/>
+                    <div th:if="${#fields.hasErrors('xacNhanMatKhau')}" class="text-danger" style="font-size:0.8rem;margin-top:4px">
+                        <span th:errors="*{xacNhanMatKhau}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-cinema w-100" style="padding:13px;font-size:0.95rem;justify-content:center">
+                <i class="fas fa-user-plus"></i>Tạo tài khoản
+            </button>
+        </form>
+
+        <div class="text-center mt-4" style="color:#666;font-size:0.88rem">
+            Đã có tài khoản?
+            <a th:href="@{/login}" style="color:#e50914;text-decoration:none;font-weight:600">Đăng nhập ngay</a>
+        </div>
+    </div>
+</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head layout:fragment="head-extra">
+<style>
+.account-sidebar-link {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; color: var(--text-secondary);
+    text-decoration: none; font-size: 0.88rem;
+    font-weight: 500; border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+.account-sidebar-link:hover, .account-sidebar-link.active {
+    background: rgba(229,9,20,0.1); color: #fff;
+}
+.account-sidebar-link i { width: 18px; color: #e50914; text-align: center; }
+.stat-mini {
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; text-align: center;
+}
+.stat-mini-val { font-size: 1.4rem; font-weight: 800; }
+.stat-mini-lbl { font-size: 0.75rem; color: #666; margin-top: 2px; }
+</style>
+</head>
+<body>
+<main layout:fragment="content">
+<div style="background:var(--bg-dark);min-height:calc(100vh - 180px);padding:40px 0">
+<div class="container" style="max-width:960px">
+
+    <!-- Breadcrumb -->
+    <div style="color:#555;font-size:0.82rem;margin-bottom:24px">
+        <a th:href="@{/}" style="color:#555;text-decoration:none">Trang chủ</a>
+        <span class="mx-2">/</span>
+        <span style="color:#b3b3b3">Tài khoản của tôi</span>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT: Profile sidebar -->
+        <div class="col-md-3">
+            <!-- Avatar card -->
+            <div class="card-dark text-center mb-3" style="padding:24px 16px">
+                <div style="width:72px;height:72px;background:linear-gradient(135deg,#e50914,#b20710);
+                            border-radius:50%;display:flex;align-items:center;justify-content:center;
+                            margin:0 auto 12px;font-size:1.8rem;font-weight:800;color:#fff;
+                            box-shadow:0 4px 20px rgba(229,9,20,0.4)"
+                     th:text="${khachHang?.hoTen?.substring(0,1)?.toUpperCase() ?: 'U'}"></div>
+                <div style="font-weight:700;font-size:0.95rem" th:text="${khachHang?.hoTen ?: 'Người dùng'}"></div>
+                <div style="color:#555;font-size:0.8rem;margin:4px 0" th:text="${khachHang?.email}"></div>
+                <span class="badge-status badge-success" style="margin-top:8px;display:inline-block">Khách hàng</span>
+                <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2a2a2a;font-size:0.78rem;color:#555">
+                    Thành viên từ:
+                    <span th:text="${khachHang?.ngayDangKy != null ? #temporals.format(khachHang.ngayDangKy, 'MM/yyyy') : '--'}"></span>
+                </div>
+            </div>
+
+            <!-- Nav links -->
+            <div class="card-dark" style="padding:10px">
+                <a href="#thong-tin" class="account-sidebar-link active" onclick="showTab('thong-tin',this)">
+                    <i class="fas fa-user"></i>Thông tin
+                </a>
+                <a href="#lich-su" class="account-sidebar-link" onclick="showTab('lich-su',this)">
+                    <i class="fas fa-history"></i>Lịch sử đặt vé
+                </a>
+                <div style="height:1px;background:#2a2a2a;margin:6px 0"></div>
+                <a th:href="@{/}" class="account-sidebar-link">
+                    <i class="fas fa-home"></i>Trang chủ
+                </a>
+                <form th:action="@{/logout}" method="post" style="margin:0">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="account-sidebar-link w-100"
+                            style="background:none;border:none;cursor:pointer;text-align:left;color:#e50914">
+                        <i class="fas fa-sign-out-alt" style="color:#e50914"></i>Đăng xuất
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- RIGHT: Content -->
+        <div class="col-md-9">
+
+            <!-- ALERT messages -->
+            <div th:if="${successMessage}" class="alert mb-3"
+                 style="background:rgba(70,211,105,0.1);border:1px solid rgba(70,211,105,0.3);color:#46d369;border-radius:10px;padding:12px 16px;font-size:0.88rem">
+                <i class="fas fa-check-circle me-2"></i><span th:text="${successMessage}"></span>
+            </div>
+            <div th:if="${errorMessage}" class="alert mb-3"
+                 style="background:rgba(229,9,20,0.1);border:1px solid rgba(229,9,20,0.3);color:#ff4d4d;border-radius:10px;padding:12px 16px;font-size:0.88rem">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${errorMessage}"></span>
+            </div>
+
+            <!-- TAB: Thong tin -->
+            <div id="tab-thong-tin">
+                <div class="card-dark mb-3">
+                    <h2 style="font-size:1rem;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #2a2a2a">
+                        <i class="fas fa-user me-2" style="color:#e50914"></i>Thông tin cá nhân
+                    </h2>
+                    <form th:action="@{/tai-khoan/cap-nhat}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-dark">Họ và tên *</label>
+                                <div style="position:relative">
+                                    <i class="fas fa-user" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#555"></i>
+                                    <input type="text" name="hoTen" class="form-control-dark form-control"
+                                           th:value="${khachHang?.hoTen}" required style="padding-left:36px"/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-dark">Số điện thoại</label>
+                                <div style="position:relative">
+                                    <i class="fas fa-phone" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#555"></i>
+                                    <input type="tel" name="sdt" class="form-control-dark form-control"
+                                           th:value="${khachHang?.sdt}" pattern="[0-9]{10,15}"
+                                           placeholder="0901234567" style="padding-left:36px"/>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label-dark">Email</label>
+                                <div style="position:relative">
+                                    <i class="fas fa-envelope" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#555"></i>
+                                    <input type="email" class="form-control-dark form-control"
+                                           th:value="${khachHang?.email}" readonly
+                                           style="padding-left:36px;opacity:0.5;cursor:not-allowed"/>
+                                </div>
+                                <div style="font-size:0.75rem;color:#555;margin-top:4px">
+                                    <i class="fas fa-info-circle me-1"></i>Email không thể thay đổi
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn-cinema" style="padding:11px 28px">
+                                    <i class="fas fa-save"></i>Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Change password section -->
+                <div class="card-dark" style="border:1px solid rgba(229,9,20,0.2)">
+                    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:8px">
+                        <i class="fas fa-lock me-2" style="color:#e50914"></i>Bảo mật tài khoản
+                    </h3>
+                    <p style="color:#555;font-size:0.85rem;margin:0">
+                        Để đổi mật khẩu, vui lòng liên hệ quản trị viên hoặc sử dụng chức năng "Quên mật khẩu".
+                    </p>
+                </div>
+            </div>
+
+            <!-- TAB: Lich su dat ve -->
+            <div id="tab-lich-su" style="display:none">
+                <div class="card-dark mb-3">
+                    <h2 style="font-size:1rem;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #2a2a2a">
+                        <i class="fas fa-history me-2" style="color:#e50914"></i>Lịch sử đặt vé
+                    </h2>
+                    <a th:href="@{/dat-ve/lich-su}" class="btn-cinema-outline" style="padding:8px 16px;font-size:0.85rem">
+                        <i class="fas fa-external-link-alt"></i>Xem tất cả lịch sử
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</div>
+</main>
+<th:block layout:fragment="scripts">
+<script>
+function showTab(tabId, el) {
+    // Hide all tabs
+    document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+    // Show target tab
+    const target = document.getElementById('tab-' + tabId);
+    if (target) target.style.display = 'block';
+    // Update active link
+    document.querySelectorAll('.account-sidebar-link').forEach(l => l.classList.remove('active'));
+    if (el) el.classList.add('active');
+}
+// Auto show tab from hash
+const hash = window.location.hash.replace('#', '');
+if (hash) {
+    const link = document.querySelector(`.account-sidebar-link[href="#${hash}"]`);
+    if (link) { link.click(); event?.preventDefault(); showTab(hash, link); }
+}
+</script>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra">
+<style>
+.status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 6px;
+}
+.stat-mini-row {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+}
+.stat-mini-box {
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    min-width: 140px; flex: 1;
+}
+.stat-mini-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; flex-shrink: 0;
+}
+.filter-bar {
+    background: var(--bg-card2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Topbar -->
+    <div class="admin-topbar">
+        <div>
+            <div class="admin-page-title">
+                <i class="fas fa-ticket-alt me-2" style="color:#e50914"></i>Quản lý đặt vé
+            </div>
+            <div style="color:#555;font-size:0.82rem;margin-top:4px">Xem và xử lý tất cả đơn đặt vé</div>
+        </div>
+        <div style="color:#555;font-size:0.85rem"
+             th:text="${#temporals.format(#temporals.createNow(), 'HH:mm - dd/MM/yyyy')}"></div>
+    </div>
+
+    <!-- Stats mini row -->
+    <div class="stat-mini-row">
+        <div class="stat-mini-box">
+            <div class="stat-mini-icon" style="background:rgba(70,211,105,0.15)">
+                <i class="fas fa-check-circle" style="color:#46d369"></i>
+            </div>
+            <div>
+                <div style="font-size:1.4rem;font-weight:800" th:text="${soThanhToan ?: 0}">0</div>
+                <div style="font-size:0.75rem;color:#555">Đã thanh toán</div>
+            </div>
+        </div>
+        <div class="stat-mini-box">
+            <div class="stat-mini-icon" style="background:rgba(245,197,24,0.15)">
+                <i class="fas fa-clock" style="color:#f5c518"></i>
+            </div>
+            <div>
+                <div style="font-size:1.4rem;font-weight:800" th:text="${soChoPhanHoi ?: 0}">0</div>
+                <div style="font-size:0.75rem;color:#555">Chờ thanh toán</div>
+            </div>
+        </div>
+        <div class="stat-mini-box">
+            <div class="stat-mini-icon" style="background:rgba(229,9,20,0.15)">
+                <i class="fas fa-times-circle" style="color:#e50914"></i>
+            </div>
+            <div>
+                <div style="font-size:1.4rem;font-weight:800" th:text="${soHuy ?: 0}">0</div>
+                <div style="font-size:0.75rem;color:#555">Đã hủy</div>
+            </div>
+        </div>
+        <div class="stat-mini-box">
+            <div class="stat-mini-icon" style="background:rgba(245,197,24,0.15)">
+                <i class="fas fa-money-bill-wave" style="color:#f5c518"></i>
+            </div>
+            <div>
+                <div style="font-size:1.1rem;font-weight:800;color:#f5c518"
+                     th:text="${tongDoanhThu != null ? #numbers.formatDecimal(tongDoanhThu,0,'COMMA',0,'POINT') + '₫' : '0₫'}">0₫</div>
+                <div style="font-size:0.75rem;color:#555">Tổng doanh thu</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+        <form th:action="@{/admin/dat-ve}" method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label-dark" style="font-size:0.78rem">Mã đặt vé / Tên KH</label>
+                <input type="text" name="keyword" class="form-control-dark form-control"
+                       placeholder="Tìm kiếm..." th:value="${keyword}"/>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label-dark" style="font-size:0.78rem">Trạng thái</label>
+                <select name="trangThai" class="form-control-dark form-select">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Đã thanh toán" th:selected="${trangThaiFilter == 'Đã thanh toán'}">✅ Đã thanh toán</option>
+                    <option value="Chờ thanh toán" th:selected="${trangThaiFilter == 'Chờ thanh toán'}">⏳ Chờ thanh toán</option>
+                    <option value="Đã hủy" th:selected="${trangThaiFilter == 'Đã hủy'}">❌ Đã hủy</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn-cinema w-100" style="padding:9px;justify-content:center">
+                    <i class="fas fa-search"></i>Lọc
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a th:href="@{/admin/dat-ve}" class="btn-cinema-outline w-100" style="padding:9px;justify-content:center">
+                    <i class="fas fa-redo"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card-dark">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="font-size:0.82rem;color:#555">
+                Hiển thị <strong style="color:#fff" th:text="${danhSachDatVe != null ? danhSachDatVe.size() : 0}">0</strong> đơn
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table-dark-utc">
+                <thead>
+                    <tr>
+                        <th>Mã đặt vé</th>
+                        <th>Khách hàng</th>
+                        <th>Phim</th>
+                        <th>Ghế</th>
+                        <th>Tổng tiền</th>
+                        <th>Ngày đặt</th>
+                        <th>Trạng thái</th>
+                        <th style="text-align:center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="dv : ${danhSachDatVe}">
+                        <td>
+                            <span style="font-family:monospace;color:#e50914;font-weight:700;font-size:0.8rem"
+                                  th:text="${dv.maDat}"></span>
+                        </td>
+                        <td style="font-size:0.85rem">
+                            <div style="font-weight:600" th:text="${dv.khachHang?.hoTen ?: 'N/A'}"></div>
+                            <div style="color:#555;font-size:0.75rem" th:text="${dv.khachHang?.email}"></div>
+                        </td>
+                        <td style="font-size:0.82rem;max-width:160px">
+                            <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
+                                 th:text="${dv.ves != null and !dv.ves.isEmpty() ? dv.ves[0].lichChieu.phim.tenPhim : '—'}"></div>
+                            <div style="color:#555;font-size:0.75rem"
+                                 th:text="${dv.ves != null and !dv.ves.isEmpty() ? #temporals.format(dv.ves[0].lichChieu.thoiGianBatDau,'HH:mm dd/MM') : ''}"></div>
+                        </td>
+                        <td>
+                            <div style="display:flex;flex-wrap:wrap;gap:3px;max-width:120px">
+                                <span th:each="ve : ${dv.ves}"
+                                      style="background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);
+                                             color:#ff6b35;font-size:0.68rem;font-weight:700;padding:1px 6px;border-radius:3px"
+                                      th:text="${ve.ghe.hangGhe + ve.ghe.soGhe}"></span>
+                            </div>
+                        </td>
+                        <td class="price-text" style="white-space:nowrap;font-weight:700"
+                            th:text="${#numbers.formatDecimal(dv.tongTien,0,'COMMA',0,'POINT') + '₫'}"></td>
+                        <td style="font-size:0.8rem;color:#555;white-space:nowrap"
+                            th:text="${dv.ngayDat != null ? #temporals.format(dv.ngayDat,'HH:mm dd/MM/yy') : '—'}"></td>
+                        <td>
+                            <!-- Inline status dropdown -->
+                            <form th:action="@{/admin/dat-ve/trang-thai/{id}(id=${dv.maDat})}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <select name="trangThai" onchange="this.form.submit()"
+                                        class="form-control-dark"
+                                        style="font-size:0.75rem;padding:4px 8px;border-radius:6px;cursor:pointer;min-width:130px">
+                                    <option value="Chờ thanh toán" th:selected="${dv.trangThai == 'Chờ thanh toán'}">⏳ Chờ TT</option>
+                                    <option value="Đã thanh toán" th:selected="${dv.trangThai == 'Đã thanh toán'}">✅ Đã TT</option>
+                                    <option value="Đã hủy" th:selected="${dv.trangThai == 'Đã hủy'}">❌ Đã hủy</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td style="text-align:center">
+                            <a th:href="@{/dat-ve/ket-qua/{id}(id=${dv.maDat})}"
+                               style="background:#1a1a1a;border:1px solid #333;color:#b3b3b3;padding:5px 10px;
+                                      border-radius:6px;font-size:0.78rem;cursor:pointer;
+                                      text-decoration:none;display:inline-flex;align-items:center;gap:4px;
+                                      transition:0.2s"
+                               target="_blank"
+                               onmouseover="this.style.borderColor='#5b9bd5';this.style.color='#5b9bd5'"
+                               onmouseout="this.style.borderColor='#333';this.style.color='#b3b3b3'">
+                                <i class="fas fa-eye"></i>Xem
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${danhSachDatVe == null or danhSachDatVe.isEmpty()}">
+                        <td colspan="8" style="text-align:center;color:#444;padding:50px">
+                            <i class="fas fa-ticket-alt" style="font-size:2rem;margin-bottom:12px;display:block;color:#2a2a2a"></i>
+                            Không có đơn đặt vé nào
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

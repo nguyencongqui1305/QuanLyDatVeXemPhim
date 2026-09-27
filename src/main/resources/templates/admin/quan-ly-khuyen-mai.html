@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<div layout:fragment="content">
+    <div class="admin-topbar">
+        <div class="admin-page-title"><i class="fas fa-tags me-2" style="color:#e50914"></i>Quản lý khuyến mãi</div>
+        <button class="btn-cinema" onclick="var m = new bootstrap.Modal(document.getElementById('addPromoModal')); m.show();">
+            <i class="fas fa-plus"></i>Thêm khuyến mãi
+        </button>
+    </div>
+
+    <div class="card-dark">
+        <div class="table-responsive">
+            <table class="table-dark-utc">
+                <thead>
+                    <tr>
+                        <th>Mã KM</th><th>Tên</th><th>Loại giảm</th><th>Giá trị</th><th>Bắt đầu</th><th>Kết thúc</th><th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="km : ${danhSachKM}">
+                        <td style="color:#666;font-size:0.8rem" th:text="${km.maKm}"></td>
+                        <td style="font-weight:600" th:text="${km.tenKm}"></td>
+                        <td>
+                            <span class="badge-status"
+                                  th:class="${km.loaiGiam == 'PERCENT' ? 'badge-status badge-info' : 'badge-status badge-success'}"
+                                  th:text="${km.loaiGiam == 'PERCENT' ? 'Phần trăm' : 'Số tiền'}"></span>
+                        </td>
+                        <td class="price-text"
+                            th:text="${km.loaiGiam == 'PERCENT' ? km.giaTri + '%' : #numbers.formatDecimal(km.giaTri,0,'COMMA',0,'POINT') + '₫'}"></td>
+                        <td style="font-size:0.85rem"
+                            th:text="${km.ngayBatDau != null ? #temporals.format(km.ngayBatDau, 'dd/MM/yyyy') : '-'}"></td>
+                        <td style="font-size:0.85rem"
+                            th:text="${km.ngayKetThuc != null ? #temporals.format(km.ngayKetThuc, 'dd/MM/yyyy') : '-'}"></td>
+                        <td>
+                            <form th:action="@{/admin/khuyen-mai/xoa/{id}(id=${km.maKm})}" method="post" style="display:inline"
+                                  onsubmit="return confirm('Xóa khuyến mãi này?')">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit"
+                                        style="background:#1a1a1a;border:1px solid #333;color:#e50914;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.78rem">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${danhSachKM == null or danhSachKM.isEmpty()}">
+                        <td colspan="7" style="text-align:center;color:#444;padding:40px">Chưa có khuyến mãi nào</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Thêm khuyến mãi - PHẢI nằm trong layout:fragment content -->
+    <div class="modal fade" id="addPromoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background:#1a1a1a;border:1px solid #2a2a2a;color:#fff">
+                <div class="modal-header" style="border-color:#2a2a2a">
+                    <h5 class="modal-title"><i class="fas fa-tags me-2" style="color:#e50914"></i>Thêm khuyến mãi</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/khuyen-mai/them}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label-dark">Tên khuyến mãi *</label>
+                                <input type="text" name="tenKm" class="form-control-dark form-control"
+                                       placeholder="Giảm 20% dịp hè" required/>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-dark">Loại giảm *</label>
+                                <select name="loaiGiam" class="form-control-dark form-select" required>
+                                    <option value="PERCENT">Phần trăm (%)</option>
+                                    <option value="AMOUNT">Số tiền cố định</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-dark">Giá trị *</label>
+                                <input type="number" name="giaTri" class="form-control-dark form-control"
+                                       min="0" step="0.01" required/>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-dark">Ngày bắt đầu</label>
+                                <input type="date" name="ngayBatDau" class="form-control-dark form-control"/>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-dark">Ngày kết thúc</label>
+                                <input type="date" name="ngayKetThuc" class="form-control-dark form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-color:#2a2a2a">
+                        <button type="button" class="btn-cinema-outline" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-cinema"><i class="fas fa-save"></i>Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head layout:fragment="head-extra">
+<style>
+/* Step progress bar */
+.booking-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 32px;
+    padding: 20px 0;
+    background: #111;
+    border-radius: 12px;
+    border: 1px solid #2a2a2a;
+}
+.booking-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    position: relative;
+}
+.booking-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 2px;
+    background: #2a2a2a;
+    z-index: 1;
+}
+.booking-step.active:not(:last-child)::after,
+.booking-step.done:not(:last-child)::after {
+    background: #e50914;
+}
+.step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: #2a2a2a;
+    color: #555;
+    flex-shrink: 0;
+    transition: 0.3s;
+}
+.booking-step.active .step-num {
+    background: #e50914;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(229,9,20,0.2);
+}
+.booking-step.done .step-num {
+    background: #46d369;
+    color: #fff;
+}
+.step-label {
+    font-size: 0.82rem;
+    color: #555;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.booking-step.active .step-label { color: #fff; font-weight: 600; }
+.booking-step.done .step-label { color: #46d369; }
+
+/* Seat counter badge */
+.seat-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e50914;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    padding: 0 5px;
+    margin-left: 4px;
+}
+@media (max-width: 576px) {
+    .booking-steps { gap: 0; }
+    .booking-step { padding: 0 8px; }
+    .step-label { display: none; }
+}
+</style>
+</head>
+<body>
+<main layout:fragment="content">
+<div style="background:var(--bg-dark);min-height:calc(100vh - 180px);padding:28px 0">
+<div class="container-fluid" style="max-width:1440px;padding:0 24px">
+
+    <!-- STEP INDICATOR -->
+    <div class="booking-steps mb-4">
+        <div class="booking-step done">
+            <div class="step-num"><i class="fas fa-film" style="font-size:0.75rem"></i></div>
+            <span class="step-label">Chọn phim</span>
+        </div>
+        <div class="booking-step active">
+            <div class="step-num">2</div>
+            <span class="step-label">Chọn ghế</span>
+        </div>
+        <div class="booking-step">
+            <div class="step-num">3</div>
+            <span class="step-label">Xác nhận</span>
+        </div>
+        <div class="booking-step">
+            <div class="step-num">4</div>
+            <span class="step-label">Thanh toán</span>
+        </div>
+        <div class="booking-step">
+            <div class="step-num"><i class="fas fa-check" style="font-size:0.75rem"></i></div>
+            <span class="step-label">Hoàn tất</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- SEAT MAP COLUMN -->
+        <div class="col-lg-8">
+            <div class="seat-map-container">
+                <!-- Movie + showtime info header -->
+                <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #1a1a1a">
+                    <div class="d-flex align-items-center gap-14" style="gap:14px">
+                        <div style="width:54px;height:80px;border-radius:8px;overflow:hidden;flex-shrink:0;box-shadow:0 8px 24px rgba(0,0,0,0.6)">
+                            <img th:src="${'/images/posters/' + (lichChieu.phim.anhPoster ?: 'placeholder.svg')}"
+                                 th:alt="${lichChieu.phim.tenPhim}"
+                                 style="width:100%;height:100%;object-fit:cover"
+                                 onerror="this.onerror=null;this.src='/images/posters/placeholder.svg'"/>
+                        </div>
+                        <div style="flex:1">
+                            <h2 style="font-size:1.25rem;font-weight:800;margin-bottom:8px;color:#fff" th:text="${lichChieu.phim.tenPhim}"></h2>
+                            <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:0.82rem;color:#666">
+                                <span style="color:#fff;background:rgba(229,9,20,0.15);border:1px solid rgba(229,9,20,0.3);padding:3px 10px;border-radius:6px;font-weight:600">
+                                    <i class="fas fa-clock me-1" style="color:#e50914"></i>
+                                    <span th:text="${#temporals.format(lichChieu.thoiGianBatDau, 'HH:mm')}"></span>
+                                </span>
+                                <span><i class="fas fa-calendar me-1" style="color:#e50914"></i><span th:text="${#temporals.format(lichChieu.thoiGianBatDau, 'dd/MM/yyyy')}"></span></span>
+                                <span><i class="fas fa-building me-1" style="color:#e50914"></i><span th:text="${lichChieu.phongChieu.rapChieu.tenRap}"></span></span>
+                                <span><i class="fas fa-door-open me-1" style="color:#e50914"></i><span th:text="${lichChieu.phongChieu.tenPhong}"></span></span>
+                                <span style="color:#f5c518;font-weight:700">
+                                    <i class="fas fa-ticket-alt me-1"></i>
+                                    <span th:text="${#numbers.formatDecimal(lichChieu.giaVe,0,'COMMA',0,'POINT') + '₫/ghế'}"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCREEN indicator -->
+                <div class="screen-indicator"></div>
+                <div style="text-align:center;margin-bottom:32px"></div>
+
+                <!-- SEAT GRID -->
+                <div id="seatGrid">
+                    <div id="seatContainer">
+                        <p style="color:#666;font-size:0.85rem;text-align:center" th:if="${danhSachGhe == null or danhSachGhe.isEmpty()}">
+                            Không tìm thấy ghế cho phòng chiếu này
+                        </p>
+                    </div>
+
+                    <!-- Seats data for JS -->
+                    <script th:inline="javascript">
+                    const seatsData = /*[[${danhSachGhe}]]*/ [];
+                    const seatStatusMap = /*[[${trangThaiGhe}]]*/ {};
+                    const basePrice = /*[[${lichChieu.giaVe}]]*/ 0;
+                    const maLich = /*[[${lichChieu.maLich}]]*/ '';
+                    </script>
+                </div>
+
+                <!-- LEGEND -->
+                <div class="seat-legend">
+                    <div class="legend-item">
+                        <div class="legend-seat seat-thuong" style="border-radius:4px 4px 2px 2px"></div>
+                        <span>Thường</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-seat seat-vip" style="border-radius:4px 4px 2px 2px"></div>
+                        <span>VIP (+30%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-seat seat-doi" style="border-radius:4px 4px 2px 2px;width:48px"></div>
+                        <span>Đôi (+50%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-seat seat-selected" style="border-radius:4px 4px 2px 2px"></div>
+                        <span>Đang chọn</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-seat seat-booked" style="border-radius:4px 4px 2px 2px"></div>
+                        <span>Đã đặt</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-seat seat-hold" style="border-radius:4px 4px 2px 2px"></div>
+                        <span>Đang giữ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOOKING SUMMARY PANEL -->
+        <div class="col-lg-4">
+            <!-- Countdown timer -->
+            <div class="countdown-timer" id="countdownBox" style="display:none">
+                <div style="font-size:0.75rem;color:#b3b3b3;margin-bottom:4px">
+                    <i class="fas fa-hourglass-half me-1"></i>Thời gian giữ ghế
+                </div>
+                <div class="countdown-time" id="countdownTimer">10:00</div>
+                <div class="countdown-label">Hoàn tất trước khi hết giờ</div>
+            </div>
+
+            <div class="booking-panel">
+                <div class="booking-panel-title">
+                    <i class="fas fa-ticket-alt me-2" style="color:#e50914"></i>Thông tin đặt vé
+                </div>
+
+                <!-- Phim info -->
+                <div class="booking-info-row">
+                    <span class="booking-info-label">Phim</span>
+                    <span class="booking-info-value" style="max-width:160px;text-align:right;font-size:0.82rem" th:text="${lichChieu.phim.tenPhim}"></span>
+                </div>
+                <div class="booking-info-row">
+                    <span class="booking-info-label">Rạp</span>
+                    <span class="booking-info-value" style="font-size:0.82rem" th:text="${lichChieu.phongChieu.rapChieu.tenRap}"></span>
+                </div>
+                <div class="booking-info-row">
+                    <span class="booking-info-label">Phòng</span>
+                    <span class="booking-info-value" th:text="${lichChieu.phongChieu.tenPhong}"></span>
+                </div>
+                <div class="booking-info-row">
+                    <span class="booking-info-label">Suất chiếu</span>
+                    <span class="booking-info-value" th:text="${#temporals.format(lichChieu.thoiGianBatDau, 'HH:mm dd/MM')}"></span>
+                </div>
+                <div class="booking-info-row">
+                    <span class="booking-info-label">Giá vé</span>
+                    <span class="booking-info-value" style="color:#f5c518" th:text="${#numbers.formatDecimal(lichChieu.giaVe,0,'COMMA',0,'POINT') + '₫/ghế'}"></span>
+                </div>
+
+                <!-- Divider -->
+                <div style="border-top:1px solid #2a2a2a;margin:12px 0 8px"></div>
+
+                <!-- Selected seats -->
+                <div style="margin-bottom:4px;font-size:0.8rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">
+                    Ghế đã chọn (<span id="selectedCount">0</span>)
+                </div>
+                <div id="selectedSeatsList">
+                    <span class="text-muted-utc" style="font-size:0.85rem">Chưa chọn ghế nào</span>
+                </div>
+
+                <!-- Total -->
+                <div style="margin-top:16px;padding-top:12px;border-top:1px solid #2a2a2a">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span style="color:#b3b3b3;font-size:0.9rem">Tạm tính</span>
+                        <span class="booking-total" id="totalPrice">0 ₫</span>
+                    </div>
+                </div>
+
+                <!-- Submit form -->
+                <form th:action="@{/dat-ve/xac-nhan}" method="get" id="bookingForm" style="margin-top:16px">
+                    <input type="hidden" name="maLich" th:value="${lichChieu.maLich}"/>
+                    <input type="hidden" name="maGhes" id="maGhesInput" value=""/>
+                    <button type="submit" id="submitBtn" class="btn-cinema w-100" disabled
+                            style="padding:13px;font-size:0.95rem;justify-content:center;opacity:0.5;cursor:not-allowed"
+                            onclick="return validateAndSubmit()">
+                        <i class="fas fa-arrow-right"></i>Tiếp tục chọn khuyến mãi
+                    </button>
+                </form>
+
+                <div style="text-align:center;margin-top:12px;font-size:0.75rem;color:#444">
+                    <i class="fas fa-shield-alt me-1"></i>Ghế sẽ được giữ trong 10 phút
+                </div>
+
+                <!-- Back button -->
+                <a th:href="@{/phim/{id}(id=${lichChieu.phim.maPhim})}" class="btn-cinema-outline w-100 mt-2"
+                   style="justify-content:center;padding:10px;font-size:0.85rem">
+                    <i class="fas fa-arrow-left"></i>Quay lại
+                </a>
+            </div>
+
+            <!-- Error message -->
+            <div th:if="${errorMessage}" class="alert mt-3"
+                 style="background:rgba(229,9,20,0.1);border:1px solid rgba(229,9,20,0.3);color:#ff4d4d;border-radius:10px;padding:12px 16px;font-size:0.85rem">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${errorMessage}"></span>
+            </div>
+
+            <!-- Hướng dẫn chọn ghế -->
+            <div class="card-dark mt-3" style="padding:16px;font-size:0.82rem">
+                <div style="font-weight:700;margin-bottom:10px;color:#b3b3b3;text-transform:uppercase;font-size:0.72rem;letter-spacing:1px">
+                    <i class="fas fa-info-circle me-1" style="color:#5b9bd5"></i>Hướng dẫn
+                </div>
+                <div style="color:#666;line-height:1.8">
+                    • Nhấn vào ghế để <span style="color:#ff6b35">chọn/bỏ chọn</span><br>
+                    • Tối đa <strong style="color:#fff">8 ghế</strong> mỗi lần đặt<br>
+                    • Ghế <span style="color:#f5c518">VIP</span> tính giá +30%<br>
+                    • Ghế <span style="color:#9b59b6">Đôi</span> tính giá +50%
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</main>
+<th:block layout:fragment="scripts">
+<script>
+const MAX_SEATS = 8;
+
+// Build seat map from data
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('seatContainer');
+    if (!seatsData || seatsData.length === 0) return;
+
+    // Group seats by hang
+    const rows = {};
+    seatsData.forEach(seat => {
+        if (!rows[seat.hangGhe]) rows[seat.hangGhe] = [];
+        rows[seat.hangGhe].push(seat);
+    });
+
+    // Sort rows alphabetically
+    Object.keys(rows).sort().forEach(hang => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'seat-row';
+        rowDiv.style.marginTop = '8px';
+
+        // Left label
+        const label = document.createElement('div');
+        label.className = 'seat-row-label';
+        label.textContent = hang;
+        rowDiv.appendChild(label);
+
+        // Seats sorted by so ghe
+        rows[hang].sort((a, b) => a.soGhe - b.soGhe).forEach(seat => {
+            const status = seatStatusMap[seat.maGhe] || 'TRONG';
+            const loaiGhe = seat.loaiGhe || 'Thường';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.dataset.maGhe = seat.maGhe;
+            btn.dataset.hang = hang;
+            btn.dataset.so = seat.soGhe;
+            btn.dataset.loaiGhe = loaiGhe;
+            btn.title = `${hang}${seat.soGhe} - ${loaiGhe}`;
+            btn.textContent = seat.soGhe;
+
+            let cls = 'seat ';
+            if (status === 'DA_DAT') { cls += 'seat-booked'; btn.disabled = true; btn.title += ' (Đã đặt)'; }
+            else if (status === 'GIU_TAM') { cls += 'seat-hold'; btn.disabled = true; btn.title += ' (Đang giữ)'; }
+            else if (status === 'BAO_TRI') { cls += 'seat-maintenance'; btn.disabled = true; btn.title += ' (Bảo trì)'; }
+            else if (loaiGhe === 'VIP') cls += 'seat-vip';
+            else if (loaiGhe === 'Đôi') cls += 'seat-doi';
+            else cls += 'seat-thuong';
+
+            btn.className = cls;
+            rowDiv.appendChild(btn);
+        });
+
+        // Right label
+        const label2 = label.cloneNode(true);
+        rowDiv.appendChild(label2);
+        container.appendChild(rowDiv);
+    });
+
+    // Init seat selection
+    SeatMap.init(basePrice);
+});
+
+function validateAndSubmit() {
+    const maGhes = SeatMap.selectedSeats;
+    if (maGhes.length === 0) {
+        showToast('Vui lòng chọn ít nhất 1 ghế', 'warning');
+        return false;
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.disabled = true;
+    showLoading();
+
+    // Giu ghe tam truoc khi chuyen sang trang xac nhan, tranh 2 nguoi cung dat 1 ghe
+    const params = new URLSearchParams();
+    params.append('maLich', maLich);
+    maGhes.forEach(maGhe => params.append('maGhes', maGhe));
+
+    fetch('/dat-ve/giu-ghe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                showToast(data.message || 'Không thể giữ ghế, vui lòng thử lại', 'error');
+                if (submitBtn) submitBtn.disabled = false;
+                hideLoading();
+                setTimeout(() => window.location.reload(), 1500);
+                return;
+            }
+            const form = document.getElementById('bookingForm');
+            form.querySelectorAll('input[name="maGhes"]').forEach(i => i.remove());
+            maGhes.forEach(maGhe => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'maGhes';
+                input.value = maGhe;
+                form.appendChild(input);
+            });
+            form.submit();
+        })
+        .catch(() => {
+            showToast('Lỗi kết nối, vui lòng thử lại', 'error');
+            if (submitBtn) submitBtn.disabled = false;
+            hideLoading();
+        });
+
+    return false;
+}
+
+// Override SeatMap.updateSummary to also enable/disable submit button properly
+const origInit = SeatMap.init.bind(SeatMap);
+SeatMap.init = function(bp) {
+    origInit(bp);
+    // Update submit button style when seats change
+};
+
+// Patch toggleSeat to enforce max seats
+const origToggle = SeatMap.toggleSeat.bind(SeatMap);
+SeatMap.toggleSeat = function(seat) {
+    const maGhe = seat.dataset.maGhe;
+    const isSelected = seat.classList.contains('seat-selected');
+    if (!isSelected && SeatMap.selectedSeats.length >= MAX_SEATS) {
+        showToast(`Bạn chỉ có thể chọn tối đa ${MAX_SEATS} ghế`, 'warning');
+        return;
+    }
+    origToggle(seat);
+    // Update submit button
+    const btn = document.getElementById('submitBtn');
+    if (btn) {
+        const hasSeats = SeatMap.selectedSeats.length > 0;
+        btn.disabled = !hasSeats;
+        btn.style.opacity = hasSeats ? '1' : '0.5';
+        btn.style.cursor = hasSeats ? 'pointer' : 'not-allowed';
+    }
+};
+</script>
+</th:block>
+</body>
+</html>

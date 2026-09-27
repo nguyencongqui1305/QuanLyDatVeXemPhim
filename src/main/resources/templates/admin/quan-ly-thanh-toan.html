@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<div layout:fragment="content">
+    <div class="admin-topbar">
+        <div class="admin-page-title"><i class="fas fa-money-bill-wave me-2" style="color:#e50914"></i>Quản lý thanh toán</div>
+    </div>
+    <div class="card-dark">
+        <div class="table-responsive">
+            <table class="table-dark-utc">
+                <thead>
+                    <tr><th>Mã TT</th><th>Mã đặt vé</th><th>Số tiền</th><th>Phương thức</th><th>Ngày TT</th><th>Trạng thái</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:each="tt : ${danhSachTT}">
+                        <td style="color:#666;font-size:0.8rem" th:text="${tt.maTt}"></td>
+                        <td style="font-weight:600" th:text="${tt.datVe.maDat}"></td>
+                        <td class="price-text" th:text="${#numbers.formatDecimal(tt.soTien,0,'COMMA',0,'POINT') + '₫'}"></td>
+                        <td th:text="${tt.phuongThuc}"></td>
+                        <td style="font-size:0.85rem" th:text="${tt.ngayTt != null ? #temporals.format(tt.ngayTt, 'HH:mm dd/MM/yyyy') : '-'}"></td>
+                        <td>
+                            <span class="badge-status"
+                                  th:class="${tt.trangThai != null and (tt.trangThai.contains('cong') or tt.trangThai.toLowerCase().contains('success') or tt.trangThai.toLowerCase().contains('th')) ? 'badge-status badge-success' : 'badge-status badge-warning'}"
+                                  th:text="${tt.trangThai}"></span>
+                        </td>
+                    </tr>
+                    <tr th:if="${danhSachTT == null or danhSachTT.isEmpty()}">
+                        <td colspan="6" style="text-align:center;color:#444;padding:40px">Chưa có giao dịch nào</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
