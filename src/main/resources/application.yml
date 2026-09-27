@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: RAPPHIM
+  datasource:
+    url: jdbc:oracle:thin:@//localhost:1521/orclpdb.fpt
+    username: system
+    password: 123456
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  sql:
+    init:
+      # QUAN TRONG: Tat hoan toan SQL file init.
+      # Schema.sql dung PL/SQL blocks ma Spring JDBC KHONG ho tro.
+      # Bang duoc tao thu cong qua Oracle SQL Developer / SQLPlus.
+      # Data mau duoc insert boi DataInitializer.java.
+      mode: never
+      separator: "@@"
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
+        format_sql: true
+        use_sql_comments: true
+        # FIX ENCODING: Bao Hibernate dung getNString()/setNString() thay vi
+        # getString()/setString(). Oracle JDBC xu ly NVARCHAR2 dung Unicode
+        # voi getNString() bat ke NLS_CHARACTERSET cua DB la gi.
+        use_nationalized_character_data: true
+    show-sql: true
+    defer-datasource-initialization: true
+
+  thymeleaf:
+    cache: false
+    encoding: UTF-8
+    mode: HTML
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+      force-request: true
+      force-response: true
+
+logging:
+  level:
+    com.qlrapphim: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+
+app:
+  seat-hold-minutes: 10
+  upload-dir: uploads

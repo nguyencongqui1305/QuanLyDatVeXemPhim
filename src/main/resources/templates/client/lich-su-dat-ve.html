@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head layout:fragment="head-extra">
+<style>
+.ticket-row {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+.ticket-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+}
+.ticket-row.paid::before { background: var(--green); }
+.ticket-row.pending::before { background: var(--gold); }
+.ticket-row.cancelled::before { background: var(--primary); }
+.ticket-row:hover { border-color: #333; transform: translateX(2px); }
+
+.ticket-movie-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+}
+.ticket-meta { font-size: 0.82rem; color: #666; }
+.ticket-meta i { width: 14px; color: #444; }
+.ticket-code {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #e50914;
+    font-weight: 700;
+    background: rgba(229,9,20,0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(229,9,20,0.15);
+}
+.filter-tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 16px; border-radius: 20px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card2);
+    color: var(--text-secondary);
+    font-size: 0.82rem; font-weight: 500;
+    cursor: pointer; transition: var(--transition);
+    text-decoration: none;
+}
+.filter-tab:hover, .filter-tab.active {
+    background: rgba(229,9,20,0.1);
+    border-color: rgba(229,9,20,0.4);
+    color: #fff;
+}
+.seat-chip {
+    display: inline-block;
+    background: rgba(255,107,53,0.15);
+    border: 1px solid rgba(255,107,53,0.3);
+    color: #ff6b35;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+</style>
+</head>
+<body>
+<main layout:fragment="content">
+<div style="background:var(--bg-dark);min-height:calc(100vh - 180px);padding:40px 0">
+<div class="container" style="max-width:900px">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+            <h1 style="font-size:1.4rem;font-weight:700;margin:0">
+                <i class="fas fa-history me-2" style="color:#e50914"></i>Lịch sử đặt vé
+            </h1>
+            <p style="color:#555;font-size:0.85rem;margin-top:4px">Xem và quản lý các đơn đặt vé của bạn</p>
+        </div>
+        <a th:href="@{/tai-khoan}" class="btn-cinema-outline" style="padding:8px 16px;font-size:0.85rem">
+            <i class="fas fa-arrow-left"></i>Tài khoản
+        </a>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        <a href="?trangThai=" class="filter-tab" th:class="${trangThaiFilter == null or trangThaiFilter == '' ? 'filter-tab active' : 'filter-tab'}">
+            <i class="fas fa-list"></i>Tất cả
+            <span th:if="${danhSachDatVe != null}"
+                  style="background:rgba(255,255,255,0.1);border-radius:10px;padding:0 6px;font-size:0.72rem"
+                  th:text="${danhSachDatVe.size()}"></span>
+        </a>
+        <a href="?trangThai=Đã thanh toán" class="filter-tab"
+           th:class="${trangThaiFilter == 'Đã thanh toán' ? 'filter-tab active' : 'filter-tab'}">
+            <i class="fas fa-check-circle" style="color:#46d369"></i>Đã thanh toán
+        </a>
+        <a href="?trangThai=Chờ thanh toán" class="filter-tab"
+           th:class="${trangThaiFilter == 'Chờ thanh toán' ? 'filter-tab active' : 'filter-tab'}">
+            <i class="fas fa-clock" style="color:#f5c518"></i>Chờ thanh toán
+        </a>
+        <a href="?trangThai=Đã hủy" class="filter-tab"
+           th:class="${trangThaiFilter == 'Đã hủy' ? 'filter-tab active' : 'filter-tab'}">
+            <i class="fas fa-times-circle" style="color:#e50914"></i>Đã hủy
+        </a>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${danhSachDatVe == null or danhSachDatVe.isEmpty()}"
+         class="card-dark text-center" style="padding:70px 40px">
+        <div style="width:80px;height:80px;background:#1a1a1a;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+            <i class="fas fa-ticket-alt" style="font-size:2rem;color:#333"></i>
+        </div>
+        <h3 style="color:#555;margin-bottom:8px">Chưa có đơn đặt vé nào</h3>
+        <p style="color:#444;font-size:0.88rem;margin-bottom:24px">Hãy chọn phim và đặt vé để xem lịch sử ở đây!</p>
+        <a th:href="@{/}" class="btn-cinema" style="display:inline-flex">
+            <i class="fas fa-film"></i>Khám phá phim ngay
+        </a>
+    </div>
+
+    <!-- Booking list -->
+    <div th:each="dv : ${danhSachDatVe}"
+         class="ticket-row"
+         th:class="'ticket-row ' + ${dv.trangThai == 'Đã thanh toán' ? 'paid' : (dv.trangThai == 'Chờ thanh toán' ? 'pending' : 'cancelled')}">
+
+        <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+            <!-- LEFT: Info -->
+            <div style="flex:1;min-width:0">
+                <!-- Code + Status -->
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    <span class="ticket-code" th:text="${dv.maDat}"></span>
+                    <span class="badge-status"
+                          th:class="${dv.trangThai == 'Đã thanh toán' ? 'badge-status badge-success' : (dv.trangThai == 'Đã hủy' ? 'badge-status badge-danger' : 'badge-status badge-warning')}"
+                          th:text="${dv.trangThai}"></span>
+                    <span style="font-size:0.75rem;color:#555">
+                        <i class="fas fa-clock me-1"></i>
+                        <span th:text="${dv.ngayDat != null ? #temporals.format(dv.ngayDat, 'HH:mm dd/MM/yyyy') : '--'}"></span>
+                    </span>
+                </div>
+
+                <!-- Movie title & showtime -->
+                <div th:if="${dv.ves != null and !dv.ves.isEmpty()}">
+                    <div class="ticket-movie-title" th:text="${dv.ves[0].lichChieu.phim.tenPhim}"></div>
+                    <div class="ticket-meta mb-2">
+                        <div class="mb-1">
+                            <i class="fas fa-building me-1"></i>
+                            <span th:text="${dv.ves[0].lichChieu.phongChieu.rapChieu.tenRap}"></span>
+                            <span style="color:#444;margin:0 6px">|</span>
+                            <i class="fas fa-door-open me-1"></i>
+                            <span th:text="${dv.ves[0].lichChieu.phongChieu.tenPhong}"></span>
+                        </div>
+                        <div>
+                            <i class="fas fa-calendar me-1"></i>
+                            <span th:text="${#temporals.format(dv.ves[0].lichChieu.thoiGianBatDau, 'HH:mm - EEEE, dd/MM/yyyy')}"></span>
+                        </div>
+                    </div>
+                    <!-- Seat chips -->
+                    <div class="d-flex flex-wrap gap-1">
+                        <span th:each="ve : ${dv.ves}" class="seat-chip"
+                              th:text="${ve.ghe.hangGhe + ve.ghe.soGhe}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Price + Actions -->
+            <div class="text-end" style="flex-shrink:0">
+                <div style="font-size:1.3rem;font-weight:800;color:#f5c518;margin-bottom:8px"
+                     th:text="${#numbers.formatDecimal(dv.tongTien,0,'COMMA',0,'POINT') + '₫'}"></div>
+                <div style="font-size:0.75rem;color:#555;margin-bottom:12px">
+                    <span th:text="${dv.ves != null ? dv.ves.size() : 0}"></span> vé
+                </div>
+                <div class="d-flex gap-2 justify-content-end flex-wrap">
+                    <a th:href="@{/dat-ve/ket-qua/{id}(id=${dv.maDat})}"
+                       class="btn-cinema-outline" style="font-size:0.78rem;padding:6px 14px">
+                        <i class="fas fa-qrcode"></i>Xem vé
+                    </a>
+                    <form th:if="${dv.trangThai == 'Chờ thanh toán'}"
+                          th:action="@{/dat-ve/huy/{id}(id=${dv.maDat})}" method="post" style="display:inline"
+                          onsubmit="return confirm('Bạn có chắc muốn hủy đơn này?')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit"
+                                style="background:transparent;border:1px solid rgba(229,9,20,0.4);color:#e50914;
+                                       padding:6px 14px;border-radius:8px;font-size:0.78rem;cursor:pointer;
+                                       transition:0.2s;display:flex;align-items:center;gap:6px"
+                                onmouseover="this.style.background='rgba(229,9,20,0.1)'"
+                                onmouseout="this.style.background='transparent'">
+                            <i class="fas fa-times"></i>Hủy đơn
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+</main>
+</body>
+</html>
