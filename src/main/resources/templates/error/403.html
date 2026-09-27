@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<main layout:fragment="content">
+<div style="min-height:calc(100vh - 180px);display:flex;align-items:center;justify-content:center;padding:40px 20px">
+    <div class="text-center animate-fade-up" style="max-width:500px">
+        <div style="font-size:6rem;font-weight:900;color:#f5c518;line-height:1;margin-bottom:8px">403</div>
+        <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:12px">Truy cập bị từ chối</h1>
+        <p style="color:#b3b3b3;margin-bottom:28px">Bạn không có quyền truy cập trang này. Vui lòng đăng nhập với tài khoản phù hợp.</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a th:href="@{/login}" class="btn-cinema-outline"><i class="fas fa-sign-in-alt"></i>Đăng nhập</a>
+            <a th:href="@{/}" class="btn-cinema"><i class="fas fa-home"></i>Trang chủ</a>
+        </div>
+    </div>
+</div>
+</main>
+</body>
+</html>
