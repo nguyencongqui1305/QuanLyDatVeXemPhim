@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="admin-topbar">
+        <div>
+            <div class="admin-page-title"><i class="fas fa-tachometer-alt me-2" style="color:#e50914"></i>Dashboard</div>
+            <div style="color:#666;font-size:0.85rem;margin-top:4px">Tổng quan hệ thống UTC Cinema</div>
+        </div>
+        <div style="color:#666;font-size:0.85rem" th:text="${#temporals.format(#temporals.createNow(), 'HH:mm - dd/MM/yyyy')}"></div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:rgba(229,9,20,0.15)">
+                    <i class="fas fa-ticket-alt" style="color:#e50914"></i>
+                </div>
+                <div>
+                    <div class="stat-value" th:text="${stats['tongVeBan'] ?: 0}">0</div>
+                    <div class="stat-label">Tổng vé đã bán</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:rgba(245,197,24,0.15)">
+                    <i class="fas fa-money-bill-wave" style="color:#f5c518"></i>
+                </div>
+                <div>
+                    <div class="stat-value" style="font-size:1.3rem" th:text="${stats['tongDoanhThu'] != null ? #numbers.formatDecimal(stats['tongDoanhThu'],0,'COMMA',0,'POINT') + '₫' : '0₫'}">0₫</div>
+                    <div class="stat-label">Tổng doanh thu</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:rgba(70,211,105,0.15)">
+                    <i class="fas fa-film" style="color:#46d369"></i>
+                </div>
+                <div>
+                    <div class="stat-value" th:text="${stats['tongPhim'] ?: 0}">0</div>
+                    <div class="stat-label">Tổng phim</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:rgba(91,155,213,0.15)">
+                    <i class="fas fa-users" style="color:#5b9bd5"></i>
+                </div>
+                <div>
+                    <div class="stat-value" th:text="${stats['tongKhachHang'] ?: 0}">0</div>
+                    <div class="stat-label">Khách hàng</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="row g-3 mb-4">
+        <!-- Doanh thu theo phim -->
+        <div class="col-lg-8">
+            <div class="card-dark">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                    <span style="width:4px;height:18px;background:#e50914;border-radius:2px;display:inline-block"></span>
+                    Doanh thu theo phim
+                </h3>
+                <canvas id="revenueChart" height="250"></canvas>
+            </div>
+        </div>
+        <!-- Phuong thuc thanh toan -->
+        <div class="col-lg-4">
+            <div class="card-dark">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+                    <span style="width:4px;height:18px;background:#f5c518;border-radius:2px;display:inline-block"></span>
+                    Phương thức thanh toán
+                </h3>
+                <canvas id="paymentChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dat ve stats -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card-dark">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">Trạng thái đơn hàng</h3>
+                <div class="booking-info-row">
+                    <span class="booking-info-label">Đã thanh toán</span>
+                    <span class="badge-status badge-success" th:text="${stats['daDatVe'] ?: 0}"></span>
+                </div>
+                <div class="booking-info-row">
+                    <span class="booking-info-label">Chờ thanh toán</span>
+                    <span class="badge-status badge-warning" th:text="${stats['choThanhToan'] ?: 0}"></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card-dark">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">Truy cập nhanh</h3>
+                <div class="d-flex flex-wrap gap-2">
+                    <a th:href="@{/admin/phim/them}" class="btn-cinema" style="font-size:0.85rem;padding:8px 14px"><i class="fas fa-plus"></i>Thêm phim</a>
+                    <a th:href="@{/admin/lich-chieu/them}" class="btn-cinema-outline" style="font-size:0.85rem;padding:8px 14px"><i class="fas fa-calendar-plus"></i>Thêm lịch chiếu</a>
+                    <a th:href="@{/admin/bao-cao}" class="btn-cinema-outline" style="font-size:0.85rem;padding:8px 14px"><i class="fas fa-chart-bar"></i>Báo cáo</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="scripts">
+<script th:inline="javascript">
+const doanhThuPhimData = /*[[${doanhThuPhim}]]*/ [];
+const doanhThuPhuongThucData = /*[[${doanhThuPhuongThuc}]]*/ [];
+
+// Bar chart - Doanh thu theo phim
+const revenueCtx = document.getElementById('revenueChart')?.getContext('2d');
+if (revenueCtx && doanhThuPhimData.length > 0) {
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: doanhThuPhimData.map(d => d[0]),
+            datasets: [{
+                label: 'Doanh thu (₫)',
+                data: doanhThuPhimData.map(d => d[1]),
+                backgroundColor: 'rgba(229,9,20,0.7)',
+                borderColor: '#e50914',
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#b3b3b3', font: { size: 11 } }, grid: { color: '#222' } },
+                y: { ticks: { color: '#b3b3b3', font: { size: 11 }, callback: v => (v/1000000).toFixed(0) + 'M' }, grid: { color: '#222' } }
+            }
+        }
+    });
+} else if (revenueCtx) {
+    revenueCtx.canvas.parentElement.innerHTML += '<p style="color:#444;text-align:center;padding:40px">Chưa có dữ liệu</p>';
+}
+
+// Pie chart - Phuong thuc thanh toan
+const payCtx = document.getElementById('paymentChart')?.getContext('2d');
+if (payCtx && doanhThuPhuongThucData.length > 0) {
+    new Chart(payCtx, {
+        type: 'doughnut',
+        data: {
+            labels: doanhThuPhuongThucData.map(d => d[0] || 'Khác'),
+            datasets: [{
+                data: doanhThuPhuongThucData.map(d => d[1]),
+                backgroundColor: ['#e50914','#f5c518','#46d369','#5b9bd5','#9b59b6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#b3b3b3', font: { size: 11 }, padding: 12 } }
+            }
+        }
+    });
+}
+</script>
+</th:block>
+</body>
+</html>
