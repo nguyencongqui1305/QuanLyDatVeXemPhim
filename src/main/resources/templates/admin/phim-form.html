@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<div layout:fragment="content">
+    <div class="admin-topbar">
+        <div>
+            <div class="admin-page-title">
+                <i class="fas fa-film me-2" style="color:#e50914"></i>
+                <span th:text="${isEdit ? 'Sửa phim' : 'Thêm phim mới'}"></span>
+            </div>
+        </div>
+        <a th:href="@{/admin/phim}" class="btn-cinema-outline">
+            <i class="fas fa-arrow-left"></i>Quay lại
+        </a>
+    </div>
+
+    <div class="card-dark">
+        <form th:action="${isEdit ? '/admin/phim/sua/' + phimForm.maPhim : '/admin/phim/them'}"
+              method="post" th:object="${phimForm}" enctype="multipart/form-data" accept-charset="UTF-8" novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="row g-3">
+                <!-- Tên phim -->
+                <div class="col-md-8">
+                    <label class="form-label-dark">Tên phim *</label>
+                    <input type="text" th:field="*{tenPhim}"
+                           class="form-control-dark form-control"
+                           placeholder="Nhập tên phim"
+                           th:classappend="${#fields.hasErrors('tenPhim')} ? ' border-danger' : ''"/>
+                    <div th:if="${#fields.hasErrors('tenPhim')}"
+                         class="text-danger" style="font-size:0.8rem;margin-top:4px">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        <span th:errors="*{tenPhim}"></span>
+                    </div>
+                </div>
+
+                <!-- Thời lượng -->
+                <div class="col-md-4">
+                    <label class="form-label-dark">Thời lượng (phút) *</label>
+                    <input type="number" th:field="*{thoiLuong}"
+                           class="form-control-dark form-control"
+                           placeholder="120" min="1"
+                           th:classappend="${#fields.hasErrors('thoiLuong')} ? ' border-danger' : ''"/>
+                    <div th:if="${#fields.hasErrors('thoiLuong')}"
+                         class="text-danger" style="font-size:0.8rem;margin-top:4px">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        <span th:errors="*{thoiLuong}"></span>
+                    </div>
+                </div>
+
+                <!-- Đạo diễn -->
+                <div class="col-md-6">
+                    <label class="form-label-dark">Đạo diễn</label>
+                    <input type="text" th:field="*{daoDien}"
+                           class="form-control-dark form-control"
+                           placeholder="Tên đạo diễn"/>
+                    <div th:if="${#fields.hasErrors('daoDien')}"
+                         class="text-danger" style="font-size:0.8rem;margin-top:4px">
+                        <span th:errors="*{daoDien}"></span>
+                    </div>
+                </div>
+
+                <!-- Độ tuổi -->
+                <div class="col-md-3">
+                    <label class="form-label-dark">Độ tuổi</label>
+                    <select th:field="*{doTuoi}" class="form-control-dark form-select">
+                        <option value="">-- Chọn --</option>
+                        <option value="P">P - Mọi lứa tuổi</option>
+                        <option value="K">K - Dưới 13 tuổi</option>
+                        <option value="T13">T13 - Từ 13 tuổi</option>
+                        <option value="T16">T16 - Từ 16 tuổi</option>
+                        <option value="T18">T18 - Từ 18 tuổi</option>
+                    </select>
+                </div>
+
+                <!-- Ngày khởi chiếu -->
+                <div class="col-md-3">
+                    <label class="form-label-dark">Ngày khởi chiếu</label>
+                    <input type="date" th:field="*{ngayKhoiChieu}"
+                           class="form-control-dark form-control"/>
+                </div>
+
+                <!-- Trạng thái -->
+                <div class="col-md-4">
+                    <label class="form-label-dark">Trạng thái</label>
+                    <select name="trangThai" class="form-control-dark form-select">
+                        <option value="dang-chieu"
+                            th:selected="${phimForm.trangThai == null
+                                          or phimForm.trangThai == 'dang-chieu'
+                                          or (phimForm.trangThai != null and phimForm.trangThai.contains('ang'))}">Đang chiếu</option>
+                        <option value="sap-chieu"
+                            th:selected="${phimForm.trangThai == 'sap-chieu'
+                                          or (phimForm.trangThai != null and phimForm.trangThai.contains('Sắp'))}">Sắp chiếu</option>
+                        <option value="ngung-chieu"
+                            th:selected="${phimForm.trangThai == 'ngung-chieu'
+                                          or (phimForm.trangThai != null and phimForm.trangThai.contains('Ngừng'))}">Ngừng chiếu</option>
+                    </select>
+                </div>
+
+                <!-- Ảnh poster -->
+                <div class="col-12">
+                    <label class="form-label-dark">Ảnh poster</label>
+                    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+                        <!-- Preview ảnh -->
+                        <div id="posterPreviewWrap" style="width:120px;height:170px;border-radius:10px;overflow:hidden;border:2px dashed #333;background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+                            <img id="posterPreview"
+                                 th:src="${phimForm.anhPoster != null and !phimForm.anhPoster.isEmpty()} ? '/images/posters/' + ${phimForm.anhPoster} : ''"
+                                 style="width:100%;height:100%;object-fit:cover;display:none"
+                                 alt="Poster preview"/>
+                            <i id="posterIcon" class="fas fa-image" style="font-size:2rem;color:#444"></i>
+                        </div>
+                        <!-- Input controls -->
+                        <div style="flex:1;min-width:200px">
+                            <div style="display:flex;gap:8px;margin-bottom:8px">
+                                <input type="text" id="anhPosterText" th:field="*{anhPoster}"
+                                       class="form-control-dark form-control"
+                                       placeholder="poster.jpg" style="flex:1"
+                                       oninput="updatePosterPreview(this.value)"/>
+                                <label for="posterFileInput"
+                                       style="cursor:pointer;background:#e50914;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:0.82rem;display:flex;align-items:center;gap:6px;white-space:nowrap;user-select:none">
+                                    <i class="fas fa-folder-open"></i> Chọn ảnh
+                                </label>
+                                <input type="file" id="posterFileInput" name="posterFile" accept="image/*"
+                                       style="display:none"
+                                       onchange="handlePosterFile(this)"/>
+                            </div>
+                            <div style="font-size:0.75rem;color:#666">
+                                <i class="fas fa-info-circle me-1"></i>Chọn file hoặc nhập tên file đã đặt vào <code style="color:#aaa">/static/images/posters/</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thể loại -->
+                <div class="col-12">
+                    <label class="form-label-dark">Thể loại</label>
+                    <div class="d-flex flex-wrap gap-2" style="background:#111;border-radius:10px;padding:14px">
+                        <div th:each="tl : ${danhSachTheLoai}" style="display:flex;align-items:center;gap:6px">
+                            <input type="checkbox" name="maTheLoais" th:value="${tl.maTheLoai}"
+                                   th:id="'tl_' + ${tl.maTheLoai}"
+                                   th:checked="${phimForm.maTheLoais != null and phimForm.maTheLoais.contains(tl.maTheLoai)}"
+                                   style="accent-color:#e50914"/>
+                            <label th:for="'tl_' + ${tl.maTheLoai}"
+                                   style="cursor:pointer;font-size:0.88rem;color:#b3b3b3"
+                                   th:text="${tl.tenTheLoai}"></label>
+                        </div>
+                        <div th:if="${danhSachTheLoai == null or danhSachTheLoai.isEmpty()}"
+                             style="color:#444;font-size:0.85rem">Chưa có thể loại nào</div>
+                    </div>
+                </div>
+
+                <!-- Mô tả -->
+                <div class="col-12">
+                    <label class="form-label-dark">Mô tả phim</label>
+                    <textarea th:field="*{moTa}" class="form-control-dark form-control" rows="4"
+                              placeholder="Nhập nội dung phim..."></textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-12 d-flex gap-3 mt-2">
+                    <button type="submit" class="btn-cinema" style="padding:12px 28px">
+                        <i class="fas fa-save"></i>
+                        <span th:text="${isEdit ? 'Cập nhật' : 'Thêm phim'}"></span>
+                    </button>
+                    <a th:href="@{/admin/phim}" class="btn-cinema-outline" style="padding:12px 20px">
+                        <i class="fas fa-times"></i>Hủy
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+<script>
+// Preview ảnh poster khi nhập tên file
+function updatePosterPreview(filename) {
+    var img = document.getElementById('posterPreview');
+    var icon = document.getElementById('posterIcon');
+    if (filename && filename.trim() !== '') {
+        img.src = '/images/posters/' + filename.trim();
+        img.style.display = 'block';
+        icon.style.display = 'none';
+        img.onerror = function() {
+            img.style.display = 'none';
+            icon.style.display = 'block';
+        };
+    } else {
+        img.style.display = 'none';
+        icon.style.display = 'block';
+    }
+}
+
+// Xử lý khi chọn file từ máy tính
+function handlePosterFile(input) {
+    if (input.files && input.files[0]) {
+        var file = input.files[0];
+        var img = document.getElementById('posterPreview');
+        var icon = document.getElementById('posterIcon');
+        var textInput = document.getElementById('anhPosterText');
+        // Hiển thị preview bằng ObjectURL
+        img.src = URL.createObjectURL(file);
+        img.style.display = 'block';
+        icon.style.display = 'none';
+        // Điền tên file vào ô text
+        textInput.value = file.name;
+    }
+}
+
+// Khởi tạo preview nếu đang edit (có sẵn tên ảnh)
+document.addEventListener('DOMContentLoaded', function() {
+    var textInput = document.getElementById('anhPosterText');
+    if (textInput && textInput.value.trim() !== '') {
+        updatePosterPreview(textInput.value.trim());
+    }
+});
+</script>
+
+</div>
+</body>
+</html>

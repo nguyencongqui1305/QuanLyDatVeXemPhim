@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<div layout:fragment="content">
+    <div class="admin-topbar">
+        <div class="admin-page-title"><i class="fas fa-calendar-plus me-2" style="color:#e50914"></i>Thêm lịch chiếu</div>
+        <a th:href="@{/admin/lich-chieu}" class="btn-cinema-outline"><i class="fas fa-arrow-left"></i>Quay lại</a>
+    </div>
+
+    <div class="card-dark" style="max-width:700px">
+        <form th:action="@{/admin/lich-chieu/them}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label-dark">Phim *</label>
+                    <select name="maPhim" class="form-control-dark form-select" required onchange="autoFillEndTime()">
+                        <option value="">-- Chọn phim --</option>
+                        <option th:each="p : ${danhSachPhim}" th:value="${p.maPhim}"
+                                th:text="${p.tenPhim + ' (' + p.thoiLuong + ' phút)'}"
+                                th:data-duration="${p.thoiLuong}"></option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-dark">Rạp</label>
+                    <select id="rapSelect" class="form-control-dark form-select" onchange="loadPhong(this.value)">
+                        <option value="">-- Chọn rạp --</option>
+                        <option th:each="r : ${danhSachRap}" th:value="${r.maRap}" th:text="${r.tenRap}"></option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-dark">Phòng chiếu *</label>
+                    <select name="maPhong" id="phongSelect" class="form-control-dark form-select" required>
+                        <option value="">-- Chọn rạp trước --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-dark">Giá vé (VNĐ) *</label>
+                    <input type="number" name="giaVe" class="form-control-dark form-control" placeholder="85000" min="0" required/>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-dark">Giờ bắt đầu *</label>
+                    <input type="datetime-local" name="thoiGianBatDau" id="batDau" class="form-control-dark form-control" required onchange="autoFillEndTime()"/>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-dark">Giờ kết thúc *</label>
+                    <input type="datetime-local" name="thoiGianKetThuc" id="ketThuc" class="form-control-dark form-control" required/>
+                    <div style="font-size:0.75rem;color:#666;margin-top:4px">Tự động tính theo thời lượng phim</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label-dark">Trạng thái</label>
+                    <select name="trangThai" class="form-control-dark form-select">
+                        <option value="Mở bán">Mở bán</option>
+                        <option value="Tạm dừng">Tạm dừng</option>
+                        <option value="Đã hủy">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-12 d-flex gap-3 mt-2">
+                    <button type="submit" class="btn-cinema" style="padding:12px 28px"><i class="fas fa-save"></i>Lưu lịch chiếu</button>
+                    <a th:href="@{/admin/lich-chieu}" class="btn-cinema-outline" style="padding:12px 20px"><i class="fas fa-times"></i>Hủy</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<th:block layout:fragment="scripts">
+<script>
+function loadPhong(maRap) {
+    if (!maRap) return;
+    fetch('/admin/rap-chieu/' + maRap + '/phong')
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('phongSelect');
+            sel.innerHTML = '<option value="">-- Chọn phòng --</option>';
+            data.forEach(p => {
+                sel.innerHTML += `<option value="${p.maPhong}">${p.tenPhong} (${p.loaiPhong || ''} - ${p.sucChua} ghế)</option>`;
+            });
+        });
+}
+
+function autoFillEndTime() {
+    const phimSel = document.querySelector('select[name="maPhim"]');
+    const batDauEl = document.getElementById('batDau');
+    const ketThucEl = document.getElementById('ketThuc');
+
+    const selectedOption = phimSel.options[phimSel.selectedIndex];
+    const duration = parseInt(selectedOption?.dataset?.duration || 0);
+    const batDauVal = batDauEl.value;
+
+    if (duration > 0 && batDauVal) {
+        const d = new Date(batDauVal);
+        d.setMinutes(d.getMinutes() + duration + 15); // +15 phút quang cao
+        const ketThuc = d.toISOString().slice(0, 16);
+        ketThucEl.value = ketThuc;
+    }
+}
+</script>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<div layout:fragment="content">
+    <div class="admin-topbar">
+        <div>
+            <div class="admin-page-title"><i class="fas fa-film me-2" style="color:#e50914"></i>Quản lý phim</div>
+        </div>
+        <a th:href="@{/admin/phim/them}" class="btn-cinema">
+            <i class="fas fa-plus"></i>Thêm phim
+        </a>
+    </div>
+
+    <div class="card-dark">
+        <div class="table-responsive">
+            <table class="table-dark-utc">
+                <thead>
+                    <tr>
+                        <th>Mã phim</th>
+                        <th>Tên phim</th>
+                        <th>Thời lượng</th>
+                        <th>Đạo diễn</th>
+                        <th>Độ tuổi</th>
+                        <th>Khởi chiếu</th>
+                        <th>Thể loại</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="phim : ${danhSachPhim}">
+                        <td style="font-size:0.78rem;color:#666;white-space:nowrap" th:text="${phim.maPhim}"></td>
+                        <td>
+                            <div style="font-weight:600;font-size:0.9rem" th:text="${phim.tenPhim}"></div>
+                            <div style="color:#666;font-size:0.75rem" th:text="${phim.daoDien}"></div>
+                        </td>
+                        <td style="white-space:nowrap;font-size:0.82rem" th:text="${phim.thoiLuong + ' phút'}"></td>
+                        <td style="font-size:0.82rem" th:text="${phim.daoDien ?: '-'}"></td>
+                        <!-- Độ tuổi -->
+                        <td>
+                            <span th:if="${phim.doTuoi != null and phim.doTuoi != ''}"
+                                  class="movie-age-badge"
+                                  th:class="'movie-age-badge age-' + ${phim.doTuoi}"
+                                  th:text="${phim.doTuoi}"
+                                  style="font-size:0.72rem"></span>
+                            <span th:if="${phim.doTuoi == null or phim.doTuoi == ''}" style="color:#444">-</span>
+                        </td>
+                        <td style="font-size:0.82rem;white-space:nowrap"
+                            th:text="${phim.ngayKhoiChieu != null ? #temporals.format(phim.ngayKhoiChieu, 'dd/MM/yyyy') : '-'}"></td>
+                        <td>
+                            <div style="display:flex;flex-wrap:wrap;gap:3px">
+                                <span th:each="tl : ${phim.theLoais}" class="genre-badge" th:text="${tl.tenTheLoai}"></span>
+                            </div>
+                        </td>
+                        <td style="white-space:nowrap">
+                            <span class="badge-status"
+                                  th:with="tt=${phim.trangThai}"
+                                  th:class="${tt != null and (tt.contains('ang') or tt.toLowerCase().contains('dang')) ? 'badge-status badge-success' : (tt != null and (tt.contains('p chi') or tt.toLowerCase().contains('sap')) ? 'badge-status badge-info' : 'badge-status badge-warning')}"
+                                  th:text="${tt != null and tt.toLowerCase().contains('dang') ? 'Đang chiếu' : (tt != null and tt.toLowerCase().contains('sap') ? 'Sắp chiếu' : (tt != null and tt.toLowerCase().contains('ngung') ? 'Ngừng chiếu' : (tt ?: 'Không rõ')))}"></span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a th:href="@{/admin/phim/sua/{id}(id=${phim.maPhim})}"
+                                   style="background:#1a1a1a;border:1px solid #333;color:#b3b3b3;padding:5px 10px;border-radius:6px;font-size:0.78rem;text-decoration:none;transition:0.2s"
+                                   onmouseover="this.style.borderColor='#f5c518';this.style.color='#f5c518'"
+                                   onmouseout="this.style.borderColor='#333';this.style.color='#b3b3b3'">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form th:action="@{/admin/phim/xoa/{id}(id=${phim.maPhim})}" method="post" style="display:inline"
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa phim này?')">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit"
+                                            style="background:#1a1a1a;border:1px solid #333;color:#b3b3b3;padding:5px 10px;border-radius:6px;font-size:0.78rem;cursor:pointer;transition:0.2s"
+                                            onmouseover="this.style.borderColor='#e50914';this.style.color='#e50914'"
+                                            onmouseout="this.style.borderColor='#333';this.style.color='#b3b3b3'">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${danhSachPhim == null or danhSachPhim.isEmpty()}">
+                        <td colspan="9" style="text-align:center;color:#444;padding:40px">Chưa có phim nào</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
