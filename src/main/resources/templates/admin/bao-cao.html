@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="admin-topbar">
+        <div class="admin-page-title"><i class="fas fa-chart-bar me-2" style="color:#e50914"></i>Báo cáo thống kê</div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:rgba(229,9,20,0.15)"><i class="fas fa-ticket-alt" style="color:#e50914"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${stats['tongVeBan'] ?: 0}"></div>
+                    <div class="stat-label">Tổng vé bán</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:rgba(245,197,24,0.15)"><i class="fas fa-coins" style="color:#f5c518"></i></div>
+                <div>
+                    <div class="stat-value" style="font-size:1.1rem" th:text="${stats['tongDoanhThu'] != null ? #numbers.formatDecimal(stats['tongDoanhThu'],0,'COMMA',0,'POINT') + '₫' : '0₫'}"></div>
+                    <div class="stat-label">Tổng doanh thu</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:rgba(70,211,105,0.15)"><i class="fas fa-check-circle" style="color:#46d369"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${stats['daDatVe'] ?: 0}"></div>
+                    <div class="stat-label">Đã thanh toán</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:rgba(91,155,213,0.15)"><i class="fas fa-users" style="color:#5b9bd5"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${stats['tongKhachHang'] ?: 0}"></div>
+                    <div class="stat-label">Khách hàng</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="card-dark">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">Doanh thu theo phim</h3>
+                <canvas id="phimChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card-dark">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">Phương thức thanh toán</h3>
+                <canvas id="ptChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card-dark">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">Doanh thu theo phim</h3>
+                <table class="table-dark-utc" style="width:100%">
+                    <thead><tr><th>Phim</th><th>Doanh thu</th></tr></thead>
+                    <tbody>
+                        <tr th:each="row : ${doanhThuPhim}">
+                            <td th:text="${row[0]}"></td>
+                            <td class="price-text" th:text="${#numbers.formatDecimal(row[1],0,'COMMA',0,'POINT') + '₫'}"></td>
+                        </tr>
+                        <tr th:if="${doanhThuPhim == null or doanhThuPhim.isEmpty()}">
+                            <td colspan="2" style="text-align:center;color:#444;padding:20px">Chưa có dữ liệu</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card-dark">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px">Doanh thu theo rạp</h3>
+                <table class="table-dark-utc" style="width:100%">
+                    <thead><tr><th>Rạp</th><th>Doanh thu</th></tr></thead>
+                    <tbody>
+                        <tr th:each="row : ${doanhThuRap}">
+                            <td th:text="${row[0]}"></td>
+                            <td class="price-text" th:text="${#numbers.formatDecimal(row[1],0,'COMMA',0,'POINT') + '₫'}"></td>
+                        </tr>
+                        <tr th:if="${doanhThuRap == null or doanhThuRap.isEmpty()}">
+                            <td colspan="2" style="text-align:center;color:#444;padding:20px">Chưa có dữ liệu</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block layout:fragment="scripts">
+<script th:inline="javascript">
+const phimData = /*[[${doanhThuPhim}]]*/ [];
+const ptData = /*[[${doanhThuPhuongThuc}]]*/ [];
+
+if (phimData.length > 0) {
+    new Chart(document.getElementById('phimChart'), {
+        type: 'bar',
+        data: {
+            labels: phimData.map(d => d[0]),
+            datasets: [{ data: phimData.map(d => d[1]), backgroundColor: 'rgba(229,9,20,0.7)', borderRadius: 6 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#b3b3b3' }, grid: { color: '#222' } }, y: { ticks: { color: '#b3b3b3' }, grid: { color: '#222' } } } }
+    });
+}
+if (ptData.length > 0) {
+    new Chart(document.getElementById('ptChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ptData.map(d => d[0] || 'Khác'),
+            datasets: [{ data: ptData.map(d => d[1]), backgroundColor: ['#e50914','#f5c518','#46d369','#5b9bd5'], borderWidth: 0 }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#b3b3b3' } } } }
+    });
+}
+</script>
+</th:block>
+</body>
+</html>
