@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head layout:fragment="head-extra">
+<style>
+/* Home page extra styles */
+.hero-slide-img {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center top;
+}
+.now-showing-ribbon {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #e50914, #b20710);
+    color: #fff; padding: 6px 16px; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 14px;
+    box-shadow: 0 4px 15px rgba(229,9,20,0.4);
+}
+.now-showing-ribbon i { animation: pulse-icon 1.5s infinite; }
+@keyframes pulse-icon { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+.movie-card-rating {
+    position: absolute; bottom: 10px; left: 10px;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+    color: #f5c518; font-size: 0.75rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 4px;
+    display: flex; align-items: center; gap: 4px;
+}
+
+.quick-book-bar {
+    background: linear-gradient(135deg, #1a1a1a, #111);
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+}
+.quick-book-bar .row { align-items: flex-end; }
+
+.cinema-feature-card {
+    background: linear-gradient(135deg, #1a1a1a, #111);
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    transition: 0.3s;
+}
+.cinema-feature-card:hover {
+    border-color: rgba(229,9,20,0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(229,9,20,0.15);
+}
+.cinema-feature-icon {
+    width: 64px; height: 64px;
+    background: rgba(229,9,20,0.1);
+    border: 1px solid rgba(229,9,20,0.2);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 1.6rem; color: #e50914;
+}
+
+.horizontal-scroll-row {
+    display: flex; gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+}
+.horizontal-scroll-row .movie-card-h {
+    flex-shrink: 0;
+    width: 180px;
+    scroll-snap-align: start;
+}
+</style>
+</head>
+<body>
+<main layout:fragment="content">
+<div style="background:var(--bg-dark);min-height:calc(100vh - 180px)">
+
+    <!-- ======== HERO SLIDER ======== -->
+    <div id="heroCarousel" class="carousel slide hero-slider" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-inner">
+            <div th:each="phim, stat : ${phimDangChieu}" th:if="${stat.index < 5}"
+                 th:class="${stat.first ? 'carousel-item active' : 'carousel-item'}">
+                <div class="hero-slide"
+                     th:style="'background-image:url(/images/posters/' + ${phim.anhPoster ?: 'placeholder.svg'} + ');background-size:cover;background-position:center top;'">
+                    <div class="container">
+                        <div class="hero-content animate-fade-up">
+                            <div class="now-showing-ribbon">
+                                <i class="fas fa-circle" style="font-size:0.5rem"></i>Đang chiếu
+                            </div>
+                            <h1 class="hero-title" th:text="${phim.tenPhim}">Tên Phim</h1>
+                            <p class="hero-meta">
+                                <span th:if="${phim.daoDien}">
+                                    <i class="fas fa-user me-1"></i><span th:text="${phim.daoDien}"></span> &nbsp;•&nbsp;
+                                </span>
+                                <i class="fas fa-clock me-1"></i><span th:text="${phim.thoiLuong}"></span> phút
+                                <span th:if="${phim.doTuoi}">
+                                    &nbsp;•&nbsp;
+                                    <span style="background:rgba(229,9,20,0.8);border-radius:4px;padding:2px 8px;font-size:0.78rem;font-weight:700" th:text="${phim.doTuoi}"></span>
+                                </span>
+                            </p>
+                            <div class="d-flex gap-3 flex-wrap">
+                                <a th:href="@{/phim/{id}(id=${phim.maPhim})}" class="btn-cinema pulse-red">
+                                    <i class="fas fa-ticket-alt"></i>Đặt vé ngay
+                                </a>
+                                <a th:href="@{/phim/{id}(id=${phim.maPhim})}" class="btn-cinema-outline">
+                                    <i class="fas fa-info-circle"></i>Xem chi tiết
+                                </a>
+                            </div>
+                            <!-- Genre badges -->
+                            <div class="genre-badges mt-3">
+                                <span th:each="tl : ${phim.theLoais}" class="genre-badge" th:text="${tl.tenTheLoai}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fallback -->
+            <div th:if="${phimDangChieu == null or phimDangChieu.isEmpty()}" class="carousel-item active">
+                <div class="hero-slide" style="background:linear-gradient(135deg,#1a0000,#000);height:520px;align-items:center">
+                    <div class="container text-center">
+                        <h1 style="font-size:4rem;font-weight:800;color:#e50914"><i class="fas fa-film"></i></h1>
+                        <h2 style="font-size:2.5rem;font-weight:700;margin:16px 0">UTC Cinema</h2>
+                        <p style="color:#b3b3b3;font-size:1.1rem">Trải nghiệm điện ảnh đỉnh cao</p>
+                        <a th:href="@{/tim-kiem}" class="btn-cinema mt-3"><i class="fas fa-search"></i>Khám phá phim</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+        <div class="carousel-indicators" style="bottom:20px">
+            <button th:each="phim, stat : ${phimDangChieu}" th:if="${stat.index < 5}"
+                    type="button" data-bs-target="#heroCarousel" th:data-bs-slide-to="${stat.index}"
+                    th:class="${stat.first ? 'active' : ''}"
+                    style="width:8px;height:8px;border-radius:50%"></button>
+        </div>
+    </div>
+
+    <div class="container" style="padding:48px 0">
+
+        <!-- ======== QUICK BOOK BAR ======== -->
+        <div class="quick-book-bar mb-5">
+            <div class="qb-label">
+                <i class="fas fa-bolt" style="color:#e50914"></i>Đặt vé nhanh
+            </div>
+            <form th:action="@{/tim-kiem}" method="get">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label-dark"><i class="fas fa-search me-1"></i>Tên phim</label>
+                        <input type="text" name="tenPhim" placeholder="Tìm tên phim..." class="form-control-dark form-control"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label-dark"><i class="fas fa-tag me-1"></i>Thể loại</label>
+                        <select name="maTheLoai" class="form-control-dark form-select">
+                            <option value="">-- Tất cả thể loại --</option>
+                            <option th:each="tl : ${danhSachTheLoai}" th:value="${tl.maTheLoai}" th:text="${tl.tenTheLoai}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label-dark"><i class="fas fa-filter me-1"></i>Trạng thái</label>
+                        <select name="trangThai" class="form-control-dark form-select">
+                            <option value="">-- Tất cả --</option>
+                            <option value="Đang chiếu">🎬 Đang chiếu</option>
+                            <option value="Sắp chiếu">⏰ Sắp chiếu</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn-cinema w-100" style="padding:11px;justify-content:center">
+                            <i class="fas fa-search"></i>Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+
+        <!-- ======== PHIM DANG CHIEU ======== -->
+        <div th:if="${phimDangChieu != null and !phimDangChieu.isEmpty()}" class="mb-5">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h2 class="section-title" style="margin-bottom:0">
+                    <span>Phim đang chiếu</span>
+                </h2>
+                <a th:href="@{/tim-kiem(trangThai='Đang chiếu')}"
+                   style="font-size:0.85rem;color:#e50914;text-decoration:none;display:flex;align-items:center;gap:6px">
+                    Xem tất cả <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="row g-3">
+                <div th:each="phim, stat : ${phimDangChieu}" th:if="${stat.index < 8}" class="col-6 col-md-4 col-lg-3">
+                    <div class="movie-card">
+                        <div class="movie-poster-wrap">
+                            <img th:src="${'/images/posters/' + (phim.anhPoster ?: 'placeholder.svg')}"
+                                 th:alt="${phim.tenPhim}"
+                                 onerror="this.onerror=null;this.src='/images/posters/placeholder.svg'"/>
+                            <span th:if="${phim.doTuoi}" class="movie-age-badge"
+                                  th:class="'movie-age-badge age-' + ${phim.doTuoi}"
+                                  th:text="${phim.doTuoi}"></span>
+                            <!-- Thoi luong badge -->
+                            <div style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.8);color:#b3b3b3;font-size:0.72rem;padding:3px 8px;border-radius:4px">
+                                <i class="fas fa-clock me-1"></i><span th:text="${phim.thoiLuong}"></span>p
+                            </div>
+                            <div class="movie-poster-overlay">
+                                <a th:href="@{/phim/{id}(id=${phim.maPhim})}"
+                                   class="btn-cinema" style="padding:8px 16px;font-size:0.82rem">
+                                    <i class="fas fa-ticket-alt"></i>Đặt vé
+                                </a>
+                            </div>
+                        </div>
+                        <div class="movie-card-body">
+                            <h3 class="movie-title" th:text="${phim.tenPhim}"></h3>
+                            <div class="genre-badges">
+                                <span th:each="tl : ${phim.theLoais}" class="genre-badge" th:text="${tl.tenTheLoai}"></span>
+                            </div>
+                            <a th:href="@{/phim/{id}(id=${phim.maPhim})}" class="btn-cinema"
+                               style="font-size:0.8rem;padding:9px 12px;width:100%;justify-content:center;margin-top:auto">
+                                <i class="fas fa-ticket-alt"></i>Đặt vé ngay
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======== PHIM SAP CHIEU ======== -->
+        <div th:if="${phimSapChieu != null and !phimSapChieu.isEmpty()}" class="mb-5">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h2 class="section-title" style="margin-bottom:0">
+                    <span>Phim sắp chiếu</span>
+                </h2>
+                <a th:href="@{/tim-kiem(trangThai='Sắp chiếu')}"
+                   style="font-size:0.85rem;color:#f5c518;text-decoration:none;display:flex;align-items:center;gap:6px">
+                    Xem tất cả <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="row g-3">
+                <div th:each="phim, stat : ${phimSapChieu}" th:if="${stat.index < 4}" class="col-6 col-md-4 col-lg-3">
+                    <div class="movie-card" style="opacity:0.9">
+                        <div class="movie-poster-wrap">
+                            <img th:src="${'/images/posters/' + (phim.anhPoster ?: 'placeholder.svg')}"
+                                 th:alt="${phim.tenPhim}"
+                                 onerror="this.onerror=null;this.src='/images/posters/placeholder.svg'"/>
+                            <span class="movie-age-badge"
+                                  th:class="'movie-age-badge age-' + ${phim.doTuoi}"
+                                  th:text="${phim.doTuoi}"></span>
+                            <!-- Ngay ra mat badge -->
+                            <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(245,197,24,0.9));padding:16px 12px;text-align:center">
+                                <div style="color:#000;font-size:0.72rem;font-weight:700">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    <span th:text="${phim.ngayKhoiChieu != null ? #temporals.format(phim.ngayKhoiChieu, 'dd/MM/yyyy') : 'Sắp ra mắt'}"></span>
+                                </div>
+                            </div>
+                            <div class="movie-poster-overlay">
+                                <a th:href="@{/phim/{id}(id=${phim.maPhim})}"
+                                   class="btn-cinema-outline" style="padding:8px 14px;font-size:0.8rem">
+                                    <i class="fas fa-info-circle"></i>Chi tiết
+                                </a>
+                            </div>
+                        </div>
+                        <div class="movie-card-body">
+                            <h3 class="movie-title" th:text="${phim.tenPhim}"></h3>
+                            <div class="genre-badges">
+                                <span th:each="tl : ${phim.theLoais}" class="genre-badge" th:text="${tl.tenTheLoai}"></span>
+                            </div>
+                            <a th:href="@{/phim/{id}(id=${phim.maPhim})}" class="btn-cinema-outline"
+                               style="font-size:0.8rem;padding:9px 12px;width:100%;justify-content:center;margin-top:auto">
+                                <i class="fas fa-bell"></i>Thông báo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======== CINEMA FEATURES ======== -->
+        <div class="mb-5">
+            <h2 class="section-title mb-4"><span>Trải nghiệm đẳng cấp</span></h2>
+            <div class="row g-3">
+                <div class="col-md-3 col-6">
+                    <div class="cinema-feature-card">
+                        <div class="cinema-feature-icon"><i class="fas fa-film"></i></div>
+                        <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:8px">Màn hình IMAX</h4>
+                        <p style="color:#666;font-size:0.82rem;margin:0;line-height:1.5">Chất lượng hình ảnh đỉnh cao với màn hình khổng lồ</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="cinema-feature-card">
+                        <div class="cinema-feature-icon"><i class="fas fa-volume-up"></i></div>
+                        <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:8px">Dolby Atmos</h4>
+                        <p style="color:#666;font-size:0.82rem;margin:0;line-height:1.5">Âm thanh vòm 3D sống động như thật</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="cinema-feature-card">
+                        <div class="cinema-feature-icon" style="background:rgba(91,155,213,0.1);border-color:rgba(91,155,213,0.2);color:#5b9bd5">
+                            <i class="fas fa-couch"></i>
+                        </div>
+                        <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:8px">Ghế VIP</h4>
+                        <p style="color:#666;font-size:0.82rem;margin:0;line-height:1.5">Ghế da cao cấp với không gian riêng tư</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="cinema-feature-card">
+                        <div class="cinema-feature-icon" style="background:rgba(70,211,105,0.1);border-color:rgba(70,211,105,0.2);color:#46d369">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:8px">Đặt vé online</h4>
+                        <p style="color:#666;font-size:0.82rem;margin:0;line-height:1.5">Đặt vé nhanh chóng, nhận vé điện tử</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======== HE THONG RAP ======== -->
+        <div th:if="${danhSachRap != null and !danhSachRap.isEmpty()}" class="mb-5">
+            <h2 class="section-title mb-4"><span>Hệ thống rạp</span></h2>
+            <div class="row g-3">
+                <div th:each="rap : ${danhSachRap}" class="col-md-6">
+                    <div class="rap-card">
+                        <div class="rap-icon">
+                            <i class="fas fa-film" style="color:#e50914;font-size:1.2rem"></i>
+                        </div>
+                        <div style="flex:1;min-width:0">
+                            <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;color:#fff" th:text="${rap.tenRap}"></div>
+                            <div style="color:#555;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                                 th:text="${rap.diaChi}"></div>
+                            <div th:if="${rap.sdt}" style="color:#e50914;font-size:0.78rem;margin-top:4px">
+                                <i class="fas fa-phone me-1"></i><span th:text="${rap.sdt}"></span>
+                            </div>
+                        </div>
+                        <a th:href="@{/tim-kiem}" class="btn-cinema"
+                           style="padding:9px 16px;font-size:0.82rem;flex-shrink:0">
+                            <i class="fas fa-ticket-alt"></i>Đặt vé
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${(phimDangChieu == null or phimDangChieu.isEmpty()) and (phimSapChieu == null or phimSapChieu.isEmpty())}"
+             class="text-center" style="padding:80px 0">
+            <i class="fas fa-film" style="font-size:4rem;color:#2a2a2a;margin-bottom:16px;display:block"></i>
+            <h3 style="color:#555">Chưa có phim nào</h3>
+            <p style="color:#444">Dữ liệu đang được cập nhật</p>
+        </div>
+
+    </div>
+</div>
+</main>
+</body>
+</html>

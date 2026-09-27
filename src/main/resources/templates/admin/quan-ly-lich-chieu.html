@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<div layout:fragment="content">
+    <div class="admin-topbar">
+        <div class="admin-page-title"><i class="fas fa-calendar-alt me-2" style="color:#e50914"></i>Quản lý lịch chiếu</div>
+        <a th:href="@{/admin/lich-chieu/them}" class="btn-cinema"><i class="fas fa-plus"></i>Thêm lịch chiếu</a>
+    </div>
+
+    <div class="card-dark">
+        <div class="table-responsive">
+            <table class="table-dark-utc">
+                <thead>
+                    <tr>
+                        <th>Mã lịch</th>
+                        <th>Phim</th>
+                        <th>Phòng</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th>Giá vé</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="lc : ${danhSachLichChieu}">
+                        <td style="color:#666;font-size:0.8rem" th:text="${lc.maLich}"></td>
+                        <td style="font-weight:600;font-size:0.88rem" th:text="${lc.phim.tenPhim}"></td>
+                        <td style="font-size:0.85rem">
+                            <div th:text="${lc.phongChieu.rapChieu.tenRap}"></div>
+                            <div style="color:#666;font-size:0.78rem" th:text="${lc.phongChieu.tenPhong}"></div>
+                        </td>
+                        <td style="font-size:0.85rem" th:text="${#temporals.format(lc.thoiGianBatDau, 'HH:mm dd/MM/yy')}"></td>
+                        <td style="font-size:0.85rem" th:text="${#temporals.format(lc.thoiGianKetThuc, 'HH:mm dd/MM/yy')}"></td>
+                        <td class="price-text" th:text="${#numbers.formatDecimal(lc.giaVe,0,'COMMA',0,'POINT') + '₫'}"></td>
+                        <td>
+                            <!-- Dropdown đổi trạng thái -->
+                            <form th:action="@{/admin/lich-chieu/trang-thai/{id}(id=${lc.maLich})}" method="post" style="display:inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <select name="trangThai" onchange="this.form.submit()"
+                                        class="form-control-dark"
+                                        style="font-size:0.75rem;padding:4px 8px;border-radius:6px;cursor:pointer;min-width:110px">
+                                    <option th:value="'Mở bán'" th:selected="${lc.trangThai == 'Mở bán'}">✅ Mở bán</option>
+                                    <option th:value="'Tạm dừng'" th:selected="${lc.trangThai == 'Tạm dừng'}">⏸ Tạm dừng</option>
+                                    <option th:value="'Đã hủy'" th:selected="${lc.trangThai == 'Đã hủy'}">❌ Đã hủy</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <form th:action="@{/admin/lich-chieu/xoa/{id}(id=${lc.maLich})}" method="post" style="display:inline"
+                                  onsubmit="return confirm('Xóa lịch chiếu này?')">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit"
+                                        style="background:#1a1a1a;border:1px solid #333;color:#b3b3b3;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.78rem;transition:0.2s"
+                                        onmouseover="this.style.borderColor='#e50914';this.style.color='#e50914'"
+                                        onmouseout="this.style.borderColor='#333';this.style.color='#b3b3b3'">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${danhSachLichChieu == null or danhSachLichChieu.isEmpty()}">
+                        <td colspan="8" style="text-align:center;color:#444;padding:40px">Chưa có lịch chiếu nào</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

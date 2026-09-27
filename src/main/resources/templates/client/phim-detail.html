@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head layout:fragment="head-extra">
+<style>
+/* ======= PHIM DETAIL EXTRA STYLES ======= */
+
+/* Hero backdrop */
+.movie-backdrop {
+    position: relative;
+    min-height: 420px;
+    overflow: hidden;
+    background: #000;
+    margin-bottom: 0;
+}
+.movie-backdrop-img {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center 20%;
+    filter: blur(2px) brightness(0.35);
+    transform: scale(1.05);
+}
+.movie-backdrop-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(13,13,13,0.95) 100%);
+}
+.movie-backdrop-content {
+    position: relative;
+    z-index: 2;
+    padding: 48px 0 40px;
+}
+
+/* Poster card */
+.poster-card {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+    position: relative;
+    transition: transform 0.3s ease;
+}
+.poster-card:hover { transform: scale(1.02); }
+.poster-card img { width: 100%; display: block; }
+
+/* Info badges */
+.info-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 12px 0 20px;
+}
+.info-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    color: #b3b3b3;
+}
+.info-meta-item i { color: #e50914; font-size: 0.85rem; }
+
+/* ======= BOOKING SECTION - FULL WIDTH ======= */
+.booking-section {
+    background: #0d0d0d;
+    padding: 40px 0;
+    border-top: 1px solid #1a1a1a;
+}
+
+.booking-section-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.3px;
+}
+.booking-section-title .title-icon {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #e50914, #b20710);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(229,9,20,0.4);
+}
+
+/* Cinema tabs */
+.cinema-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+.cinema-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    color: #b3b3b3;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+.cinema-tab-btn:hover {
+    border-color: rgba(229,9,20,0.5);
+    color: #fff;
+}
+.cinema-tab-btn.active {
+    background: rgba(229,9,20,0.12);
+    border-color: #e50914;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 0 0 1px rgba(229,9,20,0.2);
+}
+.cinema-tab-btn .cinema-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #444;
+    transition: 0.2s;
+}
+.cinema-tab-btn.active .cinema-dot { background: #e50914; }
+
+/* Date selector */
+.date-selector-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0 12px;
+    margin-bottom: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+}
+.date-pill-lg {
+    flex-shrink: 0;
+    min-width: 72px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #2a2a2a;
+    background: #1a1a1a;
+    color: #b3b3b3;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.date-pill-lg:hover {
+    border-color: rgba(229,9,20,0.4);
+    background: rgba(229,9,20,0.05);
+    color: #fff;
+}
+.date-pill-lg.active {
+    background: #e50914;
+    border-color: #e50914;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(229,9,20,0.35);
+}
+.date-pill-lg .day-num {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 3px;
+}
+.date-pill-lg .day-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+/* Showtime grid */
+.showtime-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.showtime-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 110px;
+    text-decoration: none;
+    color: inherit;
+}
+.showtime-card:hover {
+    border-color: #e50914;
+    background: rgba(229,9,20,0.08);
+    color: inherit;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(229,9,20,0.2);
+}
+.showtime-card .st-time {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+}
+.showtime-card .st-type {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 3px;
+}
+.showtime-card .st-price {
+    font-size: 0.72rem;
+    color: #f5c518;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+/* Empty/placeholder states */
+.schedule-placeholder {
+    text-align: center;
+    padding: 48px 24px;
+    background: #111;
+    border: 1px dashed #2a2a2a;
+    border-radius: 16px;
+}
+.schedule-placeholder i {
+    font-size: 3rem;
+    color: #2a2a2a;
+    margin-bottom: 12px;
+    display: block;
+}
+.schedule-placeholder p {
+    color: #444;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Coming soon block */
+.coming-soon-block {
+    background: linear-gradient(135deg, #1a1500, #111);
+    border: 1px solid rgba(245,197,24,0.25);
+    border-radius: 16px;
+    padding: 36px;
+    text-align: center;
+}
+
+.cinema-list-dropdown {
+    position: relative;
+}
+#rapSelectStyled {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 14px 20px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    appearance: none;
+    transition: border-color 0.2s;
+}
+#rapSelectStyled:focus {
+    outline: none;
+    border-color: #e50914;
+    box-shadow: 0 0 0 3px rgba(229,9,20,0.15);
+}
+
+.section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #555;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.section-label::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: #e50914;
+    border-radius: 2px;
+    display: inline-block;
+}
+</style>
+</head>
+<body>
+<main layout:fragment="content">
+<div style="background:var(--bg-dark);min-height:calc(100vh - 180px)">
+
+    <!-- ===== HERO BACKDROP SECTION ===== -->
+    <div class="movie-backdrop">
+        <div class="movie-backdrop-img"
+             th:style="'background-image:url(/images/posters/' + ${phim.anhPoster ?: 'placeholder.svg'} + ')'">
+        </div>
+        <div class="movie-backdrop-overlay"></div>
+        <div class="movie-backdrop-content">
+            <div class="container">
+                <!-- Breadcrumb -->
+                <div class="d-flex align-items-center gap-2 mb-4" style="color:#555;font-size:0.82rem">
+                    <a th:href="@{/}" style="color:#555;text-decoration:none"><i class="fas fa-home"></i></a>
+                    <i class="fas fa-chevron-right" style="font-size:0.6rem"></i>
+                    <a th:href="@{/tim-kiem}" style="color:#555;text-decoration:none">Phim</a>
+                    <i class="fas fa-chevron-right" style="font-size:0.6rem"></i>
+                    <span style="color:#888" th:text="${phim.tenPhim}"></span>
+                </div>
+
+                <div class="row g-4 align-items-start">
+                    <!-- POSTER -->
+                    <div class="col-md-3 col-lg-2">
+                        <div class="poster-card">
+                            <img th:src="${'/images/posters/' + (phim.anhPoster ?: 'placeholder.svg')}"
+                                 th:alt="${phim.tenPhim}"
+                                 onerror="this.onerror=null;this.src='/images/posters/placeholder.svg'"/>
+                            <!-- Status ribbon -->
+                            <div th:if="${phim.trangThai == 'Đang chiếu'}"
+                                 style="position:absolute;top:12px;left:0;background:linear-gradient(90deg,#e50914,#b20710);color:#fff;font-size:0.7rem;font-weight:700;padding:5px 12px 5px 10px;border-radius:0 20px 20px 0;letter-spacing:1px">
+                                &#9679; ĐANG CHIẾU
+                            </div>
+                            <div th:if="${phim.trangThai == 'Sắp chiếu'}"
+                                 style="position:absolute;top:12px;left:0;background:linear-gradient(90deg,#f5c518,#d4a017);color:#000;font-size:0.7rem;font-weight:700;padding:5px 12px 5px 10px;border-radius:0 20px 20px 0;letter-spacing:1px">
+                                &#9200; SẮP CHIẾU
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INFO -->
+                    <div class="col-md-9 col-lg-10">
+                        <!-- Age rating + genres -->
+                        <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px">
+                            <span th:if="${phim.doTuoi}"
+                                  class="movie-age-badge"
+                                  th:classappend="${'age-' + phim.doTuoi}"
+                                  th:text="${phim.doTuoi}"
+                                  style="position:relative;top:0;right:0;font-size:0.88rem;padding:6px 14px"></span>
+                            <div class="genre-badges" style="margin:0">
+                                <span th:each="tl : ${phim.theLoais}" class="genre-badge" th:text="${tl.tenTheLoai}"></span>
+                            </div>
+                        </div>
+
+                        <h1 style="font-size:2.4rem;font-weight:800;margin:8px 0 4px;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,0.5)"
+                            th:text="${phim.tenPhim}">Tên Phim</h1>
+
+                        <!-- Meta strip -->
+                        <div class="info-meta-strip">
+                            <div class="info-meta-item" th:if="${phim.daoDien}">
+                                <i class="fas fa-user-tie"></i>
+                                <span th:text="${phim.daoDien}"></span>
+                            </div>
+                            <div class="info-meta-item">
+                                <i class="fas fa-clock"></i>
+                                <span th:text="${phim.thoiLuong}"></span> phút
+                            </div>
+                            <div class="info-meta-item" th:if="${phim.ngayKhoiChieu}">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span th:text="${#temporals.format(phim.ngayKhoiChieu, 'dd/MM/yyyy')}"></span>
+                            </div>
+                            <div class="info-meta-item">
+                                <i class="fas fa-circle" style="font-size:0.5rem"></i>
+                                <span class="badge-status"
+                                      th:classappend="${phim.trangThai == 'Đang chiếu' ? 'badge-success' : (phim.trangThai == 'Sắp chiếu' ? 'badge-warning' : 'badge-info')}"
+                                      th:text="${phim.trangThai}"></span>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div th:if="${phim.moTa}"
+                             style="max-width:700px;color:#b3b3b3;font-size:0.92rem;line-height:1.75;background:rgba(255,255,255,0.03);border-left:3px solid #e50914;padding:12px 16px;border-radius:0 8px 8px 0"
+                             th:text="${phim.moTa}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOOKING SECTION - FULL WIDTH ===== -->
+    <div class="booking-section" th:if="${phim.trangThai == 'Đang chiếu'}">
+        <div class="container">
+            <div class="booking-section-title">
+                <div class="title-icon"><i class="fas fa-ticket-alt" style="color:#fff"></i></div>
+                Mua vé xem phim
+            </div>
+
+            <!-- STEP 1: Choose Cinema -->
+            <div class="mb-5">
+                <div class="section-label">
+                    <i class="fas fa-map-marker-alt" style="color:#e50914"></i>
+                    Bước 1 — Chọn rạp chiếu
+                </div>
+                <div class="cinema-tabs" id="cinemaTabs">
+                    <div th:each="rap : ${danhSachRap}"
+                         class="cinema-tab-btn"
+                         th:data-rap-id="${rap.maRap}"
+                         th:data-rap-ten="${rap.tenRap}"
+                         th:attr="onclick='selectCinema(\'' + ${rap.maRap} + '\', this)'">
+                        <div class="cinema-dot"></div>
+                        <div>
+                            <div style="font-weight:600" th:text="${rap.tenRap}"></div>
+                            <div style="font-size:0.75rem;opacity:0.7;margin-top:1px" th:text="${rap.diaChi}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Date selector (hidden until cinema selected) -->
+            <div id="dateSection" style="display:none" class="mb-4">
+                <div class="section-label">
+                    <i class="fas fa-calendar" style="color:#e50914"></i>
+                    Bước 2 — Chọn ngày
+                </div>
+                <div class="date-selector-row" id="datePicker"></div>
+            </div>
+
+            <!-- STEP 3: Showtimes (hidden until date selected) -->
+            <div id="showtimeSection" style="display:none">
+                <div class="section-label">
+                    <i class="fas fa-clock" style="color:#e50914"></i>
+                    Bước 3 — Chọn suất chiếu
+                </div>
+                <div class="showtime-grid" id="showtimeContainer">
+                    <p style="color:#555;font-size:0.85rem">Đang tải lịch chiếu...</p>
+                </div>
+            </div>
+
+            <!-- Placeholder -->
+            <div id="schedulePlaceholder" class="schedule-placeholder">
+                <i class="fas fa-film"></i>
+                <p>Chọn rạp chiếu để xem lịch chiếu và đặt vé</p>
+            </div>
+
+            <!-- No showtime message -->
+            <div id="noShowtimeMsg" style="display:none" class="schedule-placeholder">
+                <i class="fas fa-calendar-times"></i>
+                <p style="color:#e50914">Không có suất chiếu vào ngày này tại rạp đã chọn</p>
+                <p style="font-size:0.82rem;margin-top:8px">Vui lòng chọn ngày khác hoặc rạp khác</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMING SOON -->
+    <div class="booking-section" th:if="${phim.trangThai == 'Sắp chiếu'}">
+        <div class="container">
+            <div class="coming-soon-block">
+                <div style="width:80px;height:80px;background:rgba(245,197,24,0.1);border:2px solid rgba(245,197,24,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+                    <i class="fas fa-hourglass-half" style="font-size:2rem;color:#f5c518"></i>
+                </div>
+                <h3 style="font-size:1.4rem;font-weight:800;color:#f5c518;margin-bottom:8px">Sắp ra mắt</h3>
+                <p style="color:#b3b3b3;font-size:0.95rem;margin:0 0 6px"
+                   th:text="${phim.ngayKhoiChieu != null ? 'Dự kiến khởi chiếu: ' + #temporals.format(phim.ngayKhoiChieu, 'dd/MM/yyyy') : 'Ngày chiếu chưa được công bố'}">
+                </p>
+                <div style="background:rgba(245,197,24,0.05);border:1px solid rgba(245,197,24,0.15);border-radius:10px;padding:14px 20px;display:inline-block;margin-top:16px">
+                    <i class="fas fa-bell me-2" style="color:#f5c518"></i>
+                    <span style="color:#888;font-size:0.88rem">Vé sẽ mở bán khi đến ngày khởi chiếu. Hãy quay lại sau!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden inputs -->
+    <input type="hidden" id="maPhim" th:value="${phim.maPhim}"/>
+    <input type="hidden" id="maRapHidden" value=""/>
+</div>
+</main>
+<th:block layout:fragment="scripts">
+<script th:inline="none">
+var PHIM_ID = document.getElementById('maPhim').value;
+var selectedRapId = null;
+var selectedDate = null;
+
+// --- Cinema tab selection ---
+function selectCinema(rapId, el) {
+    selectedRapId = rapId;
+    document.getElementById('maRapHidden').value = rapId;
+
+    // Update tab UI
+    document.querySelectorAll('.cinema-tab-btn').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+
+    // Show date section
+    document.getElementById('schedulePlaceholder').style.display = 'none';
+    document.getElementById('noShowtimeMsg').style.display = 'none';
+    document.getElementById('dateSection').style.display = 'block';
+    document.getElementById('showtimeSection').style.display = 'none';
+
+    generateDays();
+
+    // Auto-load today
+    var today = new Date();
+    var dateStr = today.getFullYear() + '-'
+        + String(today.getMonth()+1).padStart(2,'0') + '-'
+        + String(today.getDate()).padStart(2,'0');
+    selectedDate = dateStr;
+    loadSchedule(dateStr);
+}
+
+// --- Generate 7-day date pills ---
+function generateDays() {
+    var picker = document.getElementById('datePicker');
+    if (!picker) return;
+    picker.innerHTML = '';
+    var dayNames = ['CN','T2','T3','T4','T5','T6','T7'];
+
+    for (var i = 0; i < 7; i++) {
+        var d = new Date();
+        d.setDate(d.getDate() + i);
+        var y = d.getFullYear();
+        var mo = d.getMonth();
+        var day = d.getDate();
+        var dateStr = y + '-' + String(mo+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+
+        var pill = document.createElement('div');
+        pill.className = 'date-pill-lg' + (i === 0 ? ' active' : '');
+        pill.dataset.ngay = dateStr;
+
+        var dayNumDiv = document.createElement('div');
+        dayNumDiv.className = 'day-num';
+        dayNumDiv.textContent = day;
+        pill.appendChild(dayNumDiv);
+
+        var dayLabelDiv = document.createElement('div');
+        dayLabelDiv.className = 'day-label';
+        if (i === 0) dayLabelDiv.textContent = 'Hôm nay';
+        else if (i === 1) dayLabelDiv.textContent = 'Ngày mai';
+        else dayLabelDiv.textContent = dayNames[d.getDay()];
+        pill.appendChild(dayLabelDiv);
+
+        var monthDiv = document.createElement('div');
+        monthDiv.className = 'day-label';
+        monthDiv.style.cssText = 'font-size:0.65rem;opacity:0.6;margin-top:1px';
+        monthDiv.textContent = 'Th' + String(mo+1).padStart(2,'0');
+        pill.appendChild(monthDiv);
+
+        pill.addEventListener('click', function() {
+            document.querySelectorAll('.date-pill-lg').forEach(function(p) { p.classList.remove('active'); });
+            this.classList.add('active');
+            selectedDate = this.dataset.ngay;
+            if (selectedRapId) loadSchedule(this.dataset.ngay);
+        });
+        picker.appendChild(pill);
+    }
+}
+
+// --- Load showtimes via AJAX ---
+function loadSchedule(ngay) {
+    var container = document.getElementById('showtimeContainer');
+    var section = document.getElementById('showtimeSection');
+    var noMsg = document.getElementById('noShowtimeMsg');
+
+    section.style.display = 'block';
+    noMsg.style.display = 'none';
+    container.innerHTML = '<div style="display:flex;align-items:center;gap:10px;color:#555;font-size:0.88rem"><div style="width:20px;height:20px;border:2px solid #333;border-top-color:#e50914;border-radius:50%;animation:spin 0.8s linear infinite"></div>Đang tải lịch chiếu...</div>';
+
+    fetch('/phim/lich-chieu?maPhim=' + PHIM_ID + '&maRap=' + selectedRapId + '&ngay=' + ngay)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            container.innerHTML = '';
+            if (!data || data.length === 0) {
+                section.style.display = 'none';
+                noMsg.style.display = 'block';
+                return;
+            }
+            data.forEach(function(lc) {
+                var card = document.createElement('a');
+                card.href = '/dat-ve/chon-ghe/' + lc.maLich;
+                card.className = 'showtime-card';
+                var time = lc.thoiGianBatDau ? lc.thoiGianBatDau.substring(11,16) : '--:--';
+                var price = lc.giaVe ? lc.giaVe.toLocaleString('vi-VN') + '\u20AB' : '';
+                var phong = lc.tenPhong || '';
+
+                var timeDiv = document.createElement('div');
+                timeDiv.className = 'st-time';
+                timeDiv.textContent = time;
+                card.appendChild(timeDiv);
+
+                var typeDiv = document.createElement('div');
+                typeDiv.className = 'st-type';
+                typeDiv.textContent = phong;
+                card.appendChild(typeDiv);
+
+                var priceDiv = document.createElement('div');
+                priceDiv.className = 'st-price';
+                priceDiv.textContent = price;
+                card.appendChild(priceDiv);
+
+                container.appendChild(card);
+            });
+        })
+        .catch(function() {
+            container.innerHTML = '<p style="color:#e50914;font-size:0.85rem"><i class="fas fa-exclamation-circle me-1"></i>Lỗi tải lịch chiếu, vui lòng thử lại</p>';
+        });
+}
+</script>
+</th:block>
+</body>
+</html>

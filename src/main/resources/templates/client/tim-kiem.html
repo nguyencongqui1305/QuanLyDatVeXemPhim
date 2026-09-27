@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}">
+<head layout:fragment="head-extra"></head>
+<body>
+<main layout:fragment="content">
+<div style="background:var(--bg-dark);min-height:calc(100vh - 180px);padding:40px 0">
+<div class="container">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+        <h1 style="font-size:1.5rem;font-weight:800;margin:0;display:flex;align-items:center;gap:10px">
+            <span style="width:34px;height:34px;background:rgba(229,9,20,0.15);border-radius:8px;display:inline-flex;align-items:center;justify-content:center">
+                <i class="fas fa-search" style="color:#e50914;font-size:0.9rem"></i>
+            </span>
+            Kết quả tìm kiếm
+        </h1>
+        <span th:if="${phims != null}" class="page-badge">
+            <i class="fas fa-film"></i><span th:text="${phims.totalElements}"></span> phim
+        </span>
+    </div>
+
+    <!-- Search Filter Bar -->
+    <div class="filter-bar mb-4">
+        <form th:action="@{/tim-kiem}" method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label-dark">Tên phim</label>
+                <input type="text" name="tenPhim" class="form-control-dark form-control"
+                       placeholder="Nhập tên phim..." th:value="${tenPhimSearch}"/>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label-dark">Thể loại</label>
+                <select name="maTheLoai" class="form-control-dark form-select">
+                    <option value="">-- Tất cả --</option>
+                    <option th:each="tl : ${danhSachTheLoai}"
+                            th:value="${tl.maTheLoai}"
+                            th:text="${tl.tenTheLoai}"
+                            th:selected="${tl.maTheLoai == maTheLoaiSearch}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label-dark">Trạng thái</label>
+                <select name="trangThai" class="form-control-dark form-select">
+                    <option value="" th:selected="${trangThaiSearch == null or trangThaiSearch == ''}">-- Tất cả --</option>
+                    <option value="Đang chiếu" th:selected="${trangThaiSearch == 'Đang chiếu'}">Đang chiếu</option>
+                    <option value="Sắp chiếu" th:selected="${trangThaiSearch == 'Sắp chiếu'}">Sắp chiếu</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn-cinema" style="flex:1;justify-content:center;padding:10px">
+                    <i class="fas fa-search"></i>Tìm
+                </button>
+                <a th:href="@{/tim-kiem}" class="btn-cinema-outline" style="padding:10px 14px">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Grid -->
+    <div th:if="${phims != null and phims.hasContent()}">
+        <div class="row g-3">
+            <div th:each="phim : ${phims.content}" class="col-6 col-md-4 col-lg-3">
+                <div class="movie-card">
+                    <div class="movie-poster-wrap">
+                        <img th:src="${'/images/posters/' + (phim.anhPoster ?: 'placeholder.svg')}"
+                             th:alt="${phim.tenPhim}"
+                             onerror="this.onerror=null;this.src='/images/posters/placeholder.svg'"/>
+                        <span th:if="${phim.doTuoi}" class="movie-age-badge"
+                              th:class="'movie-age-badge age-' + ${phim.doTuoi}"
+                              th:text="${phim.doTuoi}"></span>
+                        <div class="movie-poster-overlay">
+                            <a th:href="@{/phim/{id}(id=${phim.maPhim})}" class="btn-cinema-outline" style="padding:8px 14px;font-size:0.8rem">
+                                <i class="fas fa-info-circle"></i>Chi tiết
+                            </a>
+                        </div>
+                    </div>
+                    <div class="movie-card-body">
+                        <h3 class="movie-title" th:text="${phim.tenPhim}"></h3>
+                        <div class="genre-badges">
+                            <span th:each="tl : ${phim.theLoais}" class="genre-badge" th:text="${tl.tenTheLoai}"></span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span style="font-size:0.78rem;color:#666">
+                                <i class="fas fa-clock me-1"></i><span th:text="${phim.thoiLuong}"></span> phút
+                            </span>
+                            <span class="badge-status"
+                                  th:class="${phim.trangThai == 'Đang chiếu' ? 'badge-status badge-success' : 'badge-status badge-warning'}"
+                                  th:text="${phim.trangThai}" style="font-size:0.68rem"></span>
+                        </div>
+                        <a th:href="@{/phim/{id}(id=${phim.maPhim})}" class="btn-cinema"
+                           th:if="${phim.trangThai == 'Đang chiếu'}"
+                           style="font-size:0.8rem;padding:8px 12px;width:100%;justify-content:center">
+                            <i class="fas fa-ticket-alt"></i>Đặt vé
+                        </a>
+                        <a th:href="@{/phim/{id}(id=${phim.maPhim})}" class="btn-cinema-outline"
+                           th:if="${phim.trangThai != 'Đang chiếu'}"
+                           style="font-size:0.8rem;padding:8px 12px;width:100%;justify-content:center">
+                            <i class="fas fa-info-circle"></i>Xem thêm
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${phims.totalPages > 1}" class="d-flex justify-content-center gap-2 mt-4">
+            <a th:if="${!phims.first}"
+               th:href="@{/tim-kiem(tenPhim=${tenPhimSearch},maTheLoai=${maTheLoaiSearch},trangThai=${trangThaiSearch},page=${phims.number - 1})}"
+               class="btn-cinema-outline" style="padding:8px 16px">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <span th:each="i : ${#numbers.sequence(0, phims.totalPages - 1)}">
+                <a th:href="@{/tim-kiem(tenPhim=${tenPhimSearch},maTheLoai=${maTheLoaiSearch},trangThai=${trangThaiSearch},page=${i})}"
+                   th:text="${i + 1}"
+                   th:style="${i == phims.number ? 'background:#e50914;border-color:#e50914;color:#fff;' : ''}"
+                   class="btn-cinema-outline" style="padding:8px 14px;min-width:38px;justify-content:center"></a>
+            </span>
+            <a th:if="${!phims.last}"
+               th:href="@{/tim-kiem(tenPhim=${tenPhimSearch},maTheLoai=${maTheLoaiSearch},trangThai=${trangThaiSearch},page=${phims.number + 1})}"
+               class="btn-cinema-outline" style="padding:8px 16px">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${phims == null or !phims.hasContent()}" class="text-center" style="padding:80px 0">
+        <div style="width:80px;height:80px;background:#111;border:1px solid #1e1e1e;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+            <i class="fas fa-film-slash" style="font-size:2rem;color:#2a2a2a"></i>
+        </div>
+        <h3 style="color:#444;margin-bottom:8px">Không tìm thấy phim nào</h3>
+        <p style="color:#333;margin-bottom:24px;font-size:0.9rem">Thử thay đổi từ khóa hoặc bộ lọc tìm kiếm</p>
+        <a th:href="@{/tim-kiem}" class="btn-cinema-outline" style="padding:10px 22px"><i class="fas fa-times"></i>Xóa bộ lọc</a>
+    </div>
+
+</div>
+</div>
+</main>
+</body>
+</html>
